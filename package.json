@@ -1,0 +1,173 @@
+{
+  "name": "flowguard",
+  "version": "1.0.0",
+  "description": "Universal production-ready rate limiting library for JavaScript/TypeScript",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./express": {
+      "import": {
+        "types": "./dist/adapters/express.d.ts",
+        "default": "./dist/adapters/express.js"
+      },
+      "require": {
+        "types": "./dist/adapters/express.d.cts",
+        "default": "./dist/adapters/express.cjs"
+      }
+    },
+    "./node": {
+      "import": {
+        "types": "./dist/adapters/node.d.ts",
+        "default": "./dist/adapters/node.js"
+      },
+      "require": {
+        "types": "./dist/adapters/node.d.cts",
+        "default": "./dist/adapters/node.cjs"
+      }
+    },
+    "./next": {
+      "import": {
+        "types": "./dist/adapters/next.d.ts",
+        "default": "./dist/adapters/next.js"
+      },
+      "require": {
+        "types": "./dist/adapters/next.d.cts",
+        "default": "./dist/adapters/next.cjs"
+      }
+    },
+    "./koa": {
+      "import": {
+        "types": "./dist/adapters/koa.d.ts",
+        "default": "./dist/adapters/koa.js"
+      },
+      "require": {
+        "types": "./dist/adapters/koa.d.cts",
+        "default": "./dist/adapters/koa.cjs"
+      }
+    },
+    "./react": {
+      "import": {
+        "types": "./dist/adapters/react.d.ts",
+        "default": "./dist/adapters/react.js"
+      },
+      "require": {
+        "types": "./dist/adapters/react.d.cts",
+        "default": "./dist/adapters/react.cjs"
+      }
+    },
+    "./fetch": {
+      "import": {
+        "types": "./dist/adapters/fetch.d.ts",
+        "default": "./dist/adapters/fetch.js"
+      },
+      "require": {
+        "types": "./dist/adapters/fetch.d.cts",
+        "default": "./dist/adapters/fetch.cjs"
+      }
+    },
+    "./axios": {
+      "import": {
+        "types": "./dist/adapters/axios.d.ts",
+        "default": "./dist/adapters/axios.js"
+      },
+      "require": {
+        "types": "./dist/adapters/axios.d.cts",
+        "default": "./dist/adapters/axios.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "lint": "eslint 'src/**/*.ts'",
+    "coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run typecheck && npm run lint && npm run test && npm run build"
+  },
+  "keywords": [
+    "rate-limit",
+    "rate-limiter",
+    "throttle",
+    "middleware",
+    "express",
+    "koa",
+    "next",
+    "react",
+    "fetch",
+    "axios",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "peerDependencies": {
+    "axios": ">=1.0.0",
+    "express": ">=4.0.0",
+    "koa": ">=2.0.0",
+    "next": ">=13.0.0",
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "express": {
+      "optional": true
+    },
+    "koa": {
+      "optional": true
+    },
+    "next": {
+      "optional": true
+    },
+    "axios": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.0.0",
+    "@types/express": "^5.0.0",
+    "@types/koa": "^2.15.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/supertest": "^6.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vitest/coverage-v8": "^3.0.0",
+    "axios": "^1.7.0",
+    "eslint": "^9.0.0",
+    "express": "^4.21.0",
+    "jsdom": "^26.0.0",
+    "koa": "^2.15.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "supertest": "^7.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^3.0.0"
+  }
+}

@@ -1,0 +1,35 @@
+---
+description: Project Development Guidelines
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# flowguard Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2026-03-23
+
+## Active Technologies
+
+- TypeScript 5.x (strict mode), targeting ES2022; Node.js ≥ 18.0.0 + Zero runtime dependencies in core; `react` as peerDependency for React adapter; `express`/`koa`/`next`/`axios` as peerDependencies for respective adapters (001-production-readiness)
+
+## Project Structure
+
+```text
+src/
+tests/
+```
+
+## Commands
+
+npm test && npm run lint
+
+## Code Style
+
+TypeScript 5.x (strict mode), targeting ES2022; Node.js ≥ 18.0.0: Follow standard conventions
+
+## Recent Changes
+
+- 001-production-readiness: Added TypeScript 5.x (strict mode), targeting ES2022; Node.js ≥ 18.0.0 + Zero runtime dependencies in core; `react` as peerDependency for React adapter; `express`/`koa`/`next`/`axios` as peerDependencies for respective adapters
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->

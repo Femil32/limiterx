@@ -1,0 +1,144 @@
+import type { FixedWindowState, StorageAdapter } from '../types.js';
+
+interface MemoryEntry {
+  count: number;
+  windowStart: number;
+  expiresAt: number;
+}
+
+/**
+ * In-memory storage adapter using a Map with LRU eviction and periodic TTL cleanup.
+ * Default storage for all rate limiters in v1.0.
+ *
+ * @example
+ * ```typescript
+ * const store = new MemoryStore({ maxKeys: 10000, cleanupIntervalMs: 60000 });
+ * await store.increment('user-123', 60000);
+ * store.destroy(); // Stop cleanup timer
+ * ```
+ */
+export class MemoryStore implements StorageAdapter {
+  private readonly map = new Map<string, MemoryEntry>();
+  private readonly maxKeys: number;
+  private timer: ReturnType<typeof setInterval> | null = null;
+
+  constructor(options?: { maxKeys?: number; cleanupIntervalMs?: number }) {
+    this.maxKeys = options?.maxKeys ?? 10_000;
+    const cleanupIntervalMs = options?.cleanupIntervalMs ?? 60_000;
+
+    this.timer = setInterval(() => this.cleanup(), cleanupIntervalMs);
+    // Prevent timer from holding the event loop open in Node.js
+    if (this.timer && typeof this.timer === 'object' && 'unref' in this.timer) {
+      this.timer.unref();
+    }
+  }
+
+  /** @inheritdoc */
+  async get(key: string): Promise<FixedWindowState | null> {
+    const entry = this.map.get(key);
+    if (!entry) return null;
+
+    if (entry.expiresAt < Date.now()) {
+      this.map.delete(key);
+      return null;
+    }
+
+    // Move to end for LRU freshness
+    this.map.delete(key);
+    this.map.set(key, entry);
+
+    return { count: entry.count, windowStart: entry.windowStart };
+  }
+
+  /** @inheritdoc */
+  async set(key: string, state: FixedWindowState, ttlMs: number): Promise<void> {
+    this.evictIfNeeded(key);
+
+    this.map.delete(key); // Remove to re-insert at end
+    this.map.set(key, {
+      count: state.count,
+      windowStart: state.windowStart,
+      expiresAt: Date.now() + ttlMs,
+    });
+  }
+
+  /** @inheritdoc */
+  async increment(key: string, ttlMs: number): Promise<number> {
+    const existing = this.map.get(key);
+    const now = Date.now();
+
+    if (existing && existing.expiresAt >= now) {
+      existing.count++;
+      // Move to end for LRU
+      this.map.delete(key);
+      this.map.set(key, existing);
+      return existing.count;
+    }
+
+    // New entry or expired
+    if (existing) {
+      this.map.delete(key);
+    }
+    this.evictIfNeeded(key);
+
+    const entry: MemoryEntry = {
+      count: 1,
+      windowStart: now,
+      expiresAt: now + ttlMs,
+    };
+    this.map.set(key, entry);
+    return 1;
+  }
+
+  /** @inheritdoc */
+  async delete(key: string): Promise<void> {
+    this.map.delete(key);
+  }
+
+  /** @inheritdoc */
+  async clear(): Promise<void> {
+    this.map.clear();
+  }
+
+  /**
+   * Stop background cleanup timer and release resources.
+   * Must be called when the store is no longer needed (e.g., in tests or server shutdown).
+   *
+   * @example
+   * ```typescript
+   * const store = new MemoryStore();
+   * // ... use store ...
+   * store.destroy();
+   * ```
+   */
+  destroy(): void {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+  }
+
+  /** Current number of keys in the store. */
+  get size(): number {
+    return this.map.size;
+  }
+
+  private evictIfNeeded(incomingKey: string): void {
+    if (this.map.size >= this.maxKeys && !this.map.has(incomingKey)) {
+      // Evict oldest (first key in Map iteration order)
+      const firstKey = this.map.keys().next().value;
+      if (firstKey !== undefined) {
+        this.map.delete(firstKey);
+      }
+    }
+  }
+
+  private cleanup(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.map) {
+      if (entry.expiresAt < now) {
+        this.map.delete(key);
+      }
+    }
+  }
+}
