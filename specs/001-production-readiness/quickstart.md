@@ -1,4 +1,4 @@
-# Quickstart: Flowguard
+# Quickstart: Limiterx
 
 **Feature Branch**: `001-production-readiness`  
 **Date**: 2026-03-23
@@ -11,7 +11,7 @@
 ## Installation
 
 ```bash
-npm install flowguard
+npm install limiterx
 ```
 
 ## 1. Express API Protection (Backend)
@@ -20,7 +20,7 @@ Protect your Express API with rate limiting in 3 lines:
 
 ```typescript
 import express from 'express';
-import { rateLimitExpress } from 'flowguard/express';
+import { rateLimitExpress } from 'limiterx/express';
 
 const app = express();
 
@@ -56,7 +56,7 @@ Too many requests
 
 ```typescript
 // app/api/data/route.ts
-import { rateLimitNext } from 'flowguard/next';
+import { rateLimitNext } from 'limiterx/next';
 
 const limiter = rateLimitNext({ max: 20, window: '1m' });
 
@@ -71,7 +71,7 @@ export async function GET(req, res) {
 
 ```typescript
 // middleware.ts
-import { rateLimitEdge } from 'flowguard/next';
+import { rateLimitEdge } from 'limiterx/next';
 
 export const middleware = rateLimitEdge({
   max: 10,
@@ -86,7 +86,7 @@ export const config = { matcher: ['/api/:path*'] };
 Limit user actions client-side with reactive state:
 
 ```typescript
-import { useRateLimit } from 'flowguard/react';
+import { useRateLimit } from 'limiterx/react';
 
 function SubmitButton() {
   const { allowed, remaining, attempt } = useRateLimit('form-submit', {
@@ -107,7 +107,7 @@ function SubmitButton() {
 Guard outgoing fetch requests:
 
 ```typescript
-import { rateLimitFetch } from 'flowguard/fetch';
+import { rateLimitFetch } from 'limiterx/fetch';
 
 const guardedFetch = rateLimitFetch(fetch, {
   max: 10,
@@ -168,7 +168,7 @@ const limiter = createRateLimiter({
 Full TypeScript support with strict types — all config options are autocompleted in your IDE:
 
 ```typescript
-import type { FlowGuardConfig, RateLimiterResult } from 'flowguard';
+import type { LimiterxConfig, RateLimiterResult } from 'limiterx';
 ```
 
 ## Next Steps

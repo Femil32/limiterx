@@ -1,4 +1,4 @@
-# Research: Flowguard Production Readiness
+# Research: Limiterx Production Readiness
 
 **Feature Branch**: `001-production-readiness`  
 **Date**: 2026-03-23  
@@ -98,7 +98,7 @@
 **Rationale**:
 - JavaScript `Map` preserves insertion order, making LRU eviction straightforward: delete the first key when capacity is reached.
 - Periodic cleanup (every 60 seconds, configurable) scans for expired entries, preventing memory leaks from keys that naturally expire.
-- Max key count defaults to **10,000** — configurable via `FlowGuardConfig.maxKeys` on `createRateLimiter()` (and the same default applies when constructing `MemoryStore` directly in tests; per `spec.md` FR-007 and `data-model.md`).
+- Max key count defaults to **10,000** — configurable via `LimiterxConfig.maxKeys` on `createRateLimiter()` (and the same default applies when constructing `MemoryStore` directly in tests; per `spec.md` FR-007 and `data-model.md`).
 - Cleanup uses `setInterval` with `unref()` on Node.js to avoid holding the event loop open.
 
 **Design**:
@@ -153,7 +153,7 @@
 
 **Rationale**:
 - Validation at creation time (not request time) catches misconfigurations before any traffic hits the limiter.
-- Error messages follow the pattern: `[flowguard] Invalid config: '{field}' {constraint}, received: {value}`.
+- Error messages follow the pattern: `[limiterx] Invalid config: '{field}' {constraint}, received: {value}`.
 - Validated fields: `max` (positive integer), `window` (valid duration string or positive number), `algorithm` (recognized enum value), `keyGenerator` (function or undefined), `skip` (function or undefined), `onLimit` (function or undefined), `maxKeys` (positive integer or undefined), `debug` (boolean or undefined), `headers` (boolean or undefined), `statusCode` (integer 100-599), `message` (string or plain object per V-012). See `data-model.md` V-001–V-012.
 - Returns a frozen config object to prevent mutation after validation.
 
@@ -172,7 +172,7 @@
 - Raw numbers treated as milliseconds.
 - Multipliers: `ms=1`, `s=1000`, `m=60000`, `h=3600000`, `d=86400000`.
 - Returns milliseconds as a positive integer.
-- Throws descriptive error for unrecognized formats: `[flowguard] Invalid config: 'window' string '{input}' is not a valid duration format. Expected: number, or string like '30s', '5m', '1h'`.
+- Throws descriptive error for unrecognized formats: `[limiterx] Invalid config: 'window' string '{input}' is not a valid duration format. Expected: number, or string like '30s', '5m', '1h'`.
 
 **Alternatives considered**:
 - **ms library (vercel/ms)**: Adds a dependency; the parsing logic is trivial (< 20 lines).
@@ -204,11 +204,11 @@
 
 **Rationale**:
 - Each adapter (`express.ts`, `react.ts`, etc.) is a distinct tsup entry point, producing a separate file in `dist/`.
-- `package.json` `exports` field maps subpaths (`flowguard/express`, `flowguard/react`) to specific files.
+- `package.json` `exports` field maps subpaths (`limiterx/express`, `limiterx/react`) to specific files.
 - `sideEffects: false` tells bundlers (webpack, Rollup, esbuild) that unused exports can be safely eliminated.
-- Importing `flowguard/express` includes only the Express adapter + core logic it imports; React code is excluded.
+- Importing `limiterx/express` includes only the Express adapter + core logic it imports; React code is excluded.
 - Verified by checking bundle output with `size-limit` or manual inspection of bundled output.
 
 **Alternatives considered**:
 - **Single bundle with re-exports**: Larger bundles for consumers who only need one adapter.
-- **Separate npm packages (@flowguard/express, etc.)**: Higher maintenance overhead; subpath exports achieve the same result.
+- **Separate npm packages (e.g. `@scope/express`, etc.)**: Higher maintenance overhead; subpath exports achieve the same result.

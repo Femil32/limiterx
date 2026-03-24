@@ -1,17 +1,17 @@
-# Flowguard - Local Testing Guide
+# Limiterx - Local Testing Guide
 
-Test the Flowguard npm package locally across all platforms before publishing.
+Test the Limiterx npm package locally across all platforms before publishing.
 
 All test projects live under `test-npm/` at the project root (already in `.gitignore`).
 
 ## Prerequisites
 
 ```bash
-# From the flowguard root directory
+# From the limiterx root directory
 npm install
 npm run build
 npm pack
-# Output: flowguard-1.0.0.tgz
+# Output: limiterx-1.0.0.tgz
 
 # Create the test-npm parent directory
 mkdir -p test-npm
@@ -38,14 +38,14 @@ All must pass before proceeding.
 ```bash
 mkdir -p test-npm/test-express-js && cd test-npm/test-express-js
 npm init -y
-npm install ../../flowguard-1.0.0.tgz express
+npm install ../../limiterx-1.0.0.tgz express
 ```
 
 Create `index.js`:
 
 ```js
 import express from 'express';
-import { rateLimitExpress } from 'flowguard/express';
+import { rateLimitExpress } from 'limiterx/express';
 
 const app = express();
 
@@ -56,7 +56,7 @@ app.use(rateLimitExpress({
 }));
 
 app.get('/', (_req, res) => {
-  res.json({ message: 'Hello from Flowguard!' });
+  res.json({ message: 'Hello from Limiterx!' });
 });
 
 app.listen(3000, () => console.log('http://localhost:3000'));
@@ -75,7 +75,7 @@ for i in $(seq 1 7); do curl -i http://localhost:3000; echo; done
 ```bash
 mkdir -p test-npm/test-express-ts && cd test-npm/test-express-ts
 npm init -y
-npm install ../../flowguard-1.0.0.tgz express
+npm install ../../limiterx-1.0.0.tgz express
 npm install -D typescript @types/express @types/node tsx
 ```
 
@@ -83,10 +83,10 @@ Create `index.ts`:
 
 ```ts
 import express, { Request, Response } from 'express';
-import { rateLimitExpress } from 'flowguard/express';
-import type { FlowGuardConfig } from 'flowguard';
+import { rateLimitExpress } from 'limiterx/express';
+import type { LimiterxConfig } from 'limiterx';
 
-const config: FlowGuardConfig = {
+const config: LimiterxConfig = {
   max: 5,
   window: '30s',
   debug: true,
@@ -97,7 +97,7 @@ const app = express();
 app.use(rateLimitExpress(config));
 
 app.get('/', (_req: Request, res: Response) => {
-  res.json({ message: 'Hello from Flowguard (TS)!' });
+  res.json({ message: 'Hello from Limiterx (TS)!' });
 });
 
 app.listen(3000, () => console.log('http://localhost:3000'));
@@ -123,14 +123,14 @@ for i in $(seq 1 7); do curl -i http://localhost:3000; echo; done
 ```bash
 mkdir -p test-npm/test-node-js && cd test-npm/test-node-js
 npm init -y
-npm install ../../flowguard-1.0.0.tgz
+npm install ../../limiterx-1.0.0.tgz
 ```
 
 Create `server.js`:
 
 ```js
 import http from 'node:http';
-import { rateLimitNode } from 'flowguard/node';
+import { rateLimitNode } from 'limiterx/node';
 
 const limiter = rateLimitNode({ max: 3, window: '30s', debug: true });
 
@@ -160,7 +160,7 @@ for i in $(seq 1 5); do curl -i http://localhost:3001; echo; done
 ```bash
 mkdir -p test-npm/test-node-ts && cd test-npm/test-node-ts
 npm init -y
-npm install ../../flowguard-1.0.0.tgz
+npm install ../../limiterx-1.0.0.tgz
 npm install -D typescript @types/node tsx
 ```
 
@@ -168,8 +168,8 @@ Create `server.ts`:
 
 ```ts
 import http from 'node:http';
-import { rateLimitNode } from 'flowguard/node';
-import type { RateLimiterResult } from 'flowguard';
+import { rateLimitNode } from 'limiterx/node';
+import type { RateLimiterResult } from 'limiterx';
 
 const limiter = rateLimitNode({ max: 3, window: '30s', debug: true });
 
@@ -204,7 +204,7 @@ Next.js already uses TypeScript by default.
 cd test-npm
 npx create-next-app@latest test-nextjs --ts --app --no-tailwind --no-eslint --no-src-dir
 cd test-nextjs
-npm install ../../flowguard-1.0.0.tgz
+npm install ../../limiterx-1.0.0.tgz
 ```
 
 ### Edge Middleware
@@ -212,7 +212,7 @@ npm install ../../flowguard-1.0.0.tgz
 Create `middleware.ts` at the project root:
 
 ```ts
-import { rateLimitEdge } from 'flowguard/next';
+import { rateLimitEdge } from 'limiterx/next';
 
 export const middleware = rateLimitEdge({
   max: 5,
@@ -227,7 +227,7 @@ export const config = { matcher: ['/api/:path*'] };
 Create `app/api/hello/route.ts`:
 
 ```ts
-import { rateLimitNext } from 'flowguard/next';
+import { rateLimitNext } from 'limiterx/next';
 import { NextRequest, NextResponse } from 'next/server';
 
 const limiter = rateLimitNext({ max: 3, window: '30s' });
@@ -255,14 +255,14 @@ for i in $(seq 1 7); do curl -i http://localhost:3000/api/hello; echo; done
 ```bash
 mkdir -p test-npm/test-koa-js && cd test-npm/test-koa-js
 npm init -y
-npm install ../../flowguard-1.0.0.tgz koa
+npm install ../../limiterx-1.0.0.tgz koa
 ```
 
 Create `index.js`:
 
 ```js
 import Koa from 'koa';
-import { rateLimitKoa } from 'flowguard/koa';
+import { rateLimitKoa } from 'limiterx/koa';
 
 const app = new Koa();
 
@@ -291,7 +291,7 @@ for i in $(seq 1 7); do curl -i http://localhost:3002; echo; done
 ```bash
 mkdir -p test-npm/test-koa-ts && cd test-npm/test-koa-ts
 npm init -y
-npm install ../../flowguard-1.0.0.tgz koa
+npm install ../../limiterx-1.0.0.tgz koa
 npm install -D typescript @types/koa @types/node tsx
 ```
 
@@ -299,10 +299,10 @@ Create `index.ts`:
 
 ```ts
 import Koa from 'koa';
-import { rateLimitKoa } from 'flowguard/koa';
-import type { FlowGuardConfig } from 'flowguard';
+import { rateLimitKoa } from 'limiterx/koa';
+import type { LimiterxConfig } from 'limiterx';
 
-const config: FlowGuardConfig = {
+const config: LimiterxConfig = {
   max: 5,
   window: '30s',
   debug: true,
@@ -336,13 +336,13 @@ cd test-npm
 npm create vite@latest test-react-js -- --template react
 cd test-react-js
 npm install
-npm install ../../flowguard-1.0.0.tgz
+npm install ../../limiterx-1.0.0.tgz
 ```
 
 Replace `src/App.jsx`:
 
 ```jsx
-import { useRateLimit } from 'flowguard/react';
+import { useRateLimit } from 'limiterx/react';
 
 export default function App() {
   const { allowed, remaining, retryAfter, attempt, reset } = useRateLimit('demo', {
@@ -353,7 +353,7 @@ export default function App() {
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1>Flowguard React Demo</h1>
+      <h1>Limiterx React Demo</h1>
       <p>Allowed: {allowed ? 'Yes' : 'No'}</p>
       <p>Remaining: {remaining}</p>
       {retryAfter > 0 && <p>Retry after: {Math.ceil(retryAfter / 1000)}s</p>}
@@ -379,16 +379,16 @@ cd test-npm
 npm create vite@latest test-react-ts -- --template react-ts
 cd test-react-ts
 npm install
-npm install ../../flowguard-1.0.0.tgz
+npm install ../../limiterx-1.0.0.tgz
 ```
 
 Replace `src/App.tsx`:
 
 ```tsx
-import { useRateLimit } from 'flowguard/react';
-import type { RateLimiterResult, FlowGuardConfig } from 'flowguard';
+import { useRateLimit } from 'limiterx/react';
+import type { RateLimiterResult, LimiterxConfig } from 'limiterx';
 
-const config: FlowGuardConfig = {
+const config: LimiterxConfig = {
   max: 5,
   window: '30s',
   onLimit: (result: RateLimiterResult) =>
@@ -400,7 +400,7 @@ export default function App() {
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1>Flowguard React Demo (TS)</h1>
+      <h1>Limiterx React Demo (TS)</h1>
       <p>Allowed: {allowed ? 'Yes' : 'No'}</p>
       <p>Remaining: {remaining}</p>
       {retryAfter > 0 && <p>Retry after: {Math.ceil(retryAfter / 1000)}s</p>}
@@ -435,13 +435,13 @@ npm run dev
 ```bash
 mkdir -p test-npm/test-fetch-js && cd test-npm/test-fetch-js
 npm init -y
-npm install ../../flowguard-1.0.0.tgz
+npm install ../../limiterx-1.0.0.tgz
 ```
 
 Create `test.js`:
 
 ```js
-import { rateLimitFetch } from 'flowguard/fetch';
+import { rateLimitFetch } from 'limiterx/fetch';
 
 const limitedFetch = rateLimitFetch(fetch, {
   max: 3,
@@ -473,15 +473,15 @@ node test.js
 ```bash
 mkdir -p test-npm/test-fetch-ts && cd test-npm/test-fetch-ts
 npm init -y
-npm install ../../flowguard-1.0.0.tgz
+npm install ../../limiterx-1.0.0.tgz
 npm install -D typescript @types/node tsx
 ```
 
 Create `test.ts`:
 
 ```ts
-import { rateLimitFetch } from 'flowguard/fetch';
-import { RateLimitError } from 'flowguard';
+import { rateLimitFetch } from 'limiterx/fetch';
+import { RateLimitError } from 'limiterx';
 
 const limitedFetch = rateLimitFetch(fetch, {
   max: 3,
@@ -519,14 +519,14 @@ npx tsx test.ts
 ```bash
 mkdir -p test-npm/test-axios-js && cd test-npm/test-axios-js
 npm init -y
-npm install ../../flowguard-1.0.0.tgz axios
+npm install ../../limiterx-1.0.0.tgz axios
 ```
 
 Create `test.js`:
 
 ```js
 import axios from 'axios';
-import { rateLimitAxios } from 'flowguard/axios';
+import { rateLimitAxios } from 'limiterx/axios';
 
 const client = axios.create({ baseURL: 'https://httpbin.org' });
 
@@ -565,7 +565,7 @@ node test.js
 ```bash
 mkdir -p test-npm/test-axios-ts && cd test-npm/test-axios-ts
 npm init -y
-npm install ../../flowguard-1.0.0.tgz axios
+npm install ../../limiterx-1.0.0.tgz axios
 npm install -D typescript @types/node tsx
 ```
 
@@ -573,8 +573,8 @@ Create `test.ts`:
 
 ```ts
 import axios from 'axios';
-import { rateLimitAxios } from 'flowguard/axios';
-import { RateLimitError } from 'flowguard';
+import { rateLimitAxios } from 'limiterx/axios';
+import { RateLimitError } from 'limiterx';
 
 const client = axios.create({ baseURL: 'https://httpbin.org' });
 
@@ -613,13 +613,13 @@ npx tsx test.ts
 ```bash
 mkdir -p test-npm/test-cjs && cd test-npm/test-cjs
 npm init -y
-npm install ../../flowguard-1.0.0.tgz
+npm install ../../limiterx-1.0.0.tgz
 ```
 
 Create `test.cjs`:
 
 ```js
-const { createRateLimiter } = require('flowguard');
+const { createRateLimiter } = require('limiterx');
 
 const limiter = createRateLimiter({ max: 3, window: '10s' });
 
@@ -649,25 +649,25 @@ This verifies type declarations compile correctly without running any code.
 ```bash
 mkdir -p test-npm/test-types && cd test-npm/test-types
 npm init -y
-npm install ../../flowguard-1.0.0.tgz typescript @types/node
+npm install ../../limiterx-1.0.0.tgz typescript @types/node
 npx tsc --init --strict --moduleResolution bundler --module ES2022
 ```
 
 Create `test.ts`:
 
 ```ts
-import { createRateLimiter } from 'flowguard';
-import { rateLimitExpress } from 'flowguard/express';
-import { rateLimitNode } from 'flowguard/node';
-import { rateLimitNext, rateLimitEdge } from 'flowguard/next';
-import { rateLimitKoa } from 'flowguard/koa';
-import { useRateLimit } from 'flowguard/react';
-import { rateLimitFetch } from 'flowguard/fetch';
-import { rateLimitAxios } from 'flowguard/axios';
-import type { FlowGuardConfig, RateLimiterResult, RateLimiter } from 'flowguard';
+import { createRateLimiter } from 'limiterx';
+import { rateLimitExpress } from 'limiterx/express';
+import { rateLimitNode } from 'limiterx/node';
+import { rateLimitNext, rateLimitEdge } from 'limiterx/next';
+import { rateLimitKoa } from 'limiterx/koa';
+import { useRateLimit } from 'limiterx/react';
+import { rateLimitFetch } from 'limiterx/fetch';
+import { rateLimitAxios } from 'limiterx/axios';
+import type { LimiterxConfig, RateLimiterResult, RateLimiter } from 'limiterx';
 
 // Verify core types
-const config: FlowGuardConfig = { max: 5, window: '30s' };
+const config: LimiterxConfig = { max: 5, window: '30s' };
 const limiter: RateLimiter = createRateLimiter(config);
 
 async function test(): Promise<void> {
@@ -693,7 +693,7 @@ npx tsc --noEmit
 
 ## 11. Verify Tree Shaking
 
-From the flowguard root:
+From the limiterx root:
 
 ```bash
 node scripts/verify-tree-shake.mjs
@@ -708,7 +708,7 @@ node scripts/verify-tree-shake.mjs
 ```bash
 # Remove all test projects at once
 rm -rf test-npm/
-rm flowguard-*.tgz
+rm limiterx-*.tgz
 ```
 
 ---

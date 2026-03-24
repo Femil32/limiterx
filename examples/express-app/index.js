@@ -1,5 +1,5 @@
 import express from 'express';
-import { rateLimitExpress } from 'flowguard/express';
+import { rateLimitExpress } from 'limiterx/express';
 
 const app = express();
 

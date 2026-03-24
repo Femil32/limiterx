@@ -1,4 +1,4 @@
-import type { FlowGuardConfig, RequestContext } from '../core/types.js';
+import type { LimiterxConfig, RequestContext } from '../core/types.js';
 import { createRateLimiter } from '../core/createRateLimiter.js';
 import { setRateLimitHeadersFull } from './internal/rate-limit-headers.js';
 
@@ -23,19 +23,19 @@ type KoaNext = () => Promise<void>;
  * @example
  * ```typescript
  * import Koa from 'koa';
- * import { rateLimitKoa } from 'flowguard/koa';
+ * import { rateLimitKoa } from 'limiterx/koa';
  *
  * const app = new Koa();
  * app.use(rateLimitKoa({ max: 60, window: '1m' }));
  * ```
  */
-export function rateLimitKoa(config: FlowGuardConfig) {
+export function rateLimitKoa(config: LimiterxConfig) {
   const defaultKeyGenerator = (context: RequestContext) => {
     const koaCtx = context.ctx as KoaContext;
     return koaCtx.ip;
   };
 
-  const resolvedConfig: FlowGuardConfig = {
+  const resolvedConfig: LimiterxConfig = {
     ...config,
     keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
     onLimit: undefined,
@@ -78,7 +78,7 @@ export function rateLimitKoa(config: FlowGuardConfig) {
         }
       }
       if (debug) {
-        console.log(`[flowguard:koa] DENY key="${result.key}" status=${statusCode}`);
+        console.log(`[limiterx:koa] DENY key="${result.key}" status=${statusCode}`);
       }
       ctx.status = statusCode;
       ctx.body = message;
@@ -86,7 +86,7 @@ export function rateLimitKoa(config: FlowGuardConfig) {
     }
 
     if (debug) {
-      console.log(`[flowguard:koa] ALLOW key="${result.key}" remaining=${result.remaining}`);
+      console.log(`[limiterx:koa] ALLOW key="${result.key}" remaining=${result.remaining}`);
     }
 
     await next();

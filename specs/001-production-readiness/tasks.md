@@ -2,7 +2,7 @@
 description: "Task list template for feature implementation"
 ---
 
-# Tasks: Flowguard Production Readiness
+# Tasks: Limiterx Production Readiness
 
 **Input**: Design documents from `/specs/001-production-readiness/`
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
@@ -28,7 +28,7 @@ description: "Task list template for feature implementation"
 **Purpose**: Project initialization, build, lint, and test harness
 
 - [x] T001 Create directory layout per `plan.md`: `src/core/algorithms/`, `src/core/storage/`, `src/adapters/`, `tests/unit/`, `tests/integration/`, `tests/contract/`, `examples/`, `.github/workflows/`
-- [x] T002 Create `package.json` at repository root with `name: "flowguard"`, `"sideEffects": false`, `exports` placeholders for `flowguard` and subpaths (`./express`, `./node`, `./next`, `./koa`, `./react`, `./fetch`, `./axios`), and scripts: `build`, `test`, `lint`, `typecheck`, `coverage`
+- [x] T002 Create `package.json` at repository root with `name: "limiterx"`, `"sideEffects": false`, `exports` placeholders for `limiterx` and subpaths (`./express`, `./node`, `./next`, `./koa`, `./react`, `./fetch`, `./axios`), and scripts: `build`, `test`, `lint`, `typecheck`, `coverage`
 - [x] T003 Add `tsconfig.json` (strict, ES2022, `moduleResolution` suitable for Node 18+) and `tsup.config.ts` with multi-entry `index` plus adapter entries per `research.md` R-001
 - [x] T004 [P] Add `vitest.config.ts` with `@vitest/coverage-v8`, thresholds `statements: 90`, `branches: 85`, `functions: 95`, and `include: ['src/**']` per `research.md` R-002
 - [x] T005 [P] Add ESLint config (e.g. `eslint.config.js` or `.eslintrc.cjs`) with `@typescript-eslint/parser` and `@typescript-eslint/eslint-plugin` targeting `src/**/*.ts`
@@ -44,7 +44,7 @@ description: "Task list template for feature implementation"
 
 **⚠️ CRITICAL**: Core types must exist before implementing algorithms or adapters
 
-- [x] T009 Define `FlowGuardConfig`, `RateLimiterResult`, `StorageAdapter` (internal-only — implement in `src/core/types.ts` but **do not** export from `src/index.ts`), `FixedWindowState`, `RateLimiter`, and `RequestContext` in `src/core/types.ts` with JSDoc; document default `maxKeys` **10,000** for in-memory storage per `spec.md` FR-007 (aligned with `data-model.md` — no public `store` on config in v1.0)
+- [x] T009 Define `LimiterxConfig`, `RateLimiterResult`, `StorageAdapter` (internal-only — implement in `src/core/types.ts` but **do not** export from `src/index.ts`), `FixedWindowState`, `RateLimiter`, and `RequestContext` in `src/core/types.ts` with JSDoc; document default `maxKeys` **10,000** for in-memory storage per `spec.md` FR-007 (aligned with `data-model.md` — no public `store` on config in v1.0)
 - [x] T010 Add `src/index.ts` that re-exports types from `src/core/types.ts` and will host `createRateLimiter` once implemented in Phase 3
 
 **Checkpoint**: Foundation ready — User Story phases can proceed (US2–US5 still depend on US1 core implementation)
@@ -63,12 +63,12 @@ description: "Task list template for feature implementation"
 - [x] T012 [P] [US1] Add unit tests for config validation in `tests/unit/validateConfig.test.ts` covering V-001–V-012 in `data-model.md`
 - [x] T013 [P] [US1] Add unit tests for LRU eviction, TTL cleanup, `destroy()`, and async interface in `tests/unit/MemoryStore.test.ts` (default `maxKeys` 10,000 per `spec.md`)
 - [x] T014 [P] [US1] Add unit tests for wall-clock window alignment and allow/deny transitions in `tests/unit/FixedWindowLimiter.test.ts` using `vi.useFakeTimers()` per `research.md` R-003
-- [x] T015 [US1] Add contract tests in `tests/contract/createRateLimiter.test.ts` for namespaced keys (`flowguard:{key}`), `onLimit` invocation, `onLimit` error swallowing, empty-key fallback to `'global'`, and `skip` bypass per `contracts/core-api.md`
+- [x] T015 [US1] Add contract tests in `tests/contract/createRateLimiter.test.ts` for namespaced keys (`limiterx:{key}`), `onLimit` invocation, `onLimit` error swallowing, empty-key fallback to `'global'`, and `skip` bypass per `contracts/core-api.md`
 
 ### Implementation for User Story 1
 
 - [x] T016 [P] [US1] Implement `parseWindow()` in `src/core/parseWindow.ts` per `contracts/core-api.md` and `research.md` R-008
-- [x] T017 [US1] Implement `validateConfig()` in `src/core/validateConfig.ts` with `[flowguard] Invalid config: '{field}'...` messages per `data-model.md` Validation Rules and `spec.md` FR-004
+- [x] T017 [US1] Implement `validateConfig()` in `src/core/validateConfig.ts` with `[limiterx] Invalid config: '{field}'...` messages per `data-model.md` Validation Rules and `spec.md` FR-004
 - [x] T018 [US1] Implement `MemoryStore` in `src/core/storage/MemoryStore.ts` per `contracts/core-api.md` (LRU via `Map` order, periodic cleanup, `unref` on Node, `destroy()` stops timers)
 - [x] T019 [US1] Implement `FixedWindowLimiter` in `src/core/algorithms/FixedWindowLimiter.ts` integrating `StorageAdapter.increment` / state semantics per `research.md` R-003 and `data-model.md`
 - [x] T020 [US1] Implement `createRateLimiter()` and `RateLimiter` methods (`check`, `reset`, `clear`) in `src/core/createRateLimiter.ts`, re-exported from `src/index.ts` per `contracts/core-api.md`
@@ -144,8 +144,8 @@ description: "Task list template for feature implementation"
 
 - [x] T043 [US4] Audit all exported public APIs under `src/` for JSDoc with `@example` per `spec.md` NFR-CQ; fill gaps in `src/core/*.ts`, `src/index.ts`, and `src/adapters/*.ts`
 - [x] T044 [US4] Implement `debug: true` console diagnostics in core `check()` path and each adapter per `spec.md` FR-018 (no output when `debug` false/omitted)
-- [x] T045 [US4] Add bundle size verification (e.g. `size-limit` in `package.json` or CI step using `npm pack` + `gzip`-size check) targeting core ≤ 5KB and `flowguard/react` ≤ 3KB min+gz per `plan.md` Performance Goals
-- [x] T046 [US4] Add tree-shaking smoke test or build fixture under `tests/integration/tree-shake-express.test.ts` (or `scripts/verify-tree-shake.mjs`) confirming `flowguard/express` bundle excludes React/Koa/axios adapters per `spec.md` User Story 4
+- [x] T045 [US4] Add bundle size verification (e.g. `size-limit` in `package.json` or CI step using `npm pack` + `gzip`-size check) targeting core ≤ 5KB and `limiterx/react` ≤ 3KB min+gz per `plan.md` Performance Goals
+- [x] T046 [US4] Add tree-shaking smoke test or build fixture under `tests/integration/tree-shake-express.test.ts` (or `scripts/verify-tree-shake.mjs`) confirming `limiterx/express` bundle excludes React/Koa/axios adapters per `spec.md` User Story 4
 - [x] T047 [US4] Add latency regression guard for in-memory `check()` (e.g. Vitest bench or loop in `tests/perf/check-latency.test.ts`): assert median/p95 stays **< 1ms** on CI Node runners per `spec.md` NFR-PF; document threshold in `vitest.config.ts` or test file
 
 **Checkpoint**: DX and performance NFRs evidenced by tests or scripted checks
@@ -156,7 +156,7 @@ description: "Task list template for feature implementation"
 
 **Goal**: Dual ESM/CJS publish, README, changelog, GitHub Actions matrix, npm publish on `v*` tags
 
-**Independent Test**: CI passes on PR; tagged release workflow publishes; fresh `npm install` resolves `flowguard`, `flowguard/express`, `flowguard/react` per `spec.md` User Story 5
+**Independent Test**: CI passes on PR; tagged release workflow publishes; fresh `npm install` resolves `limiterx`, `limiterx/express`, `limiterx/react` per `spec.md` User Story 5
 
 ### Documentation for User Story 5
 
@@ -295,7 +295,7 @@ vitest run tests/unit/validateConfig.edge-cases.test.ts
 2. Complete Phase 2: Foundational
 3. Complete Phase 3: User Story 1 (core + tests + exports)
 4. **STOP and VALIDATE**: Contract + unit tests pass; no framework required
-5. Demo via Node script or REPL importing `flowguard`
+5. Demo via Node script or REPL importing `limiterx`
 
 ### Incremental Delivery
 

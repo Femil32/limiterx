@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import type { FlowGuardConfig, RequestContext } from '../core/types.js';
+import type { LimiterxConfig, RequestContext } from '../core/types.js';
 import { createRateLimiter } from '../core/createRateLimiter.js';
 import { setRateLimitHeadersFull } from './internal/rate-limit-headers.js';
 
@@ -12,19 +12,19 @@ import { setRateLimitHeadersFull } from './internal/rate-limit-headers.js';
  * @example
  * ```typescript
  * import express from 'express';
- * import { rateLimitExpress } from 'flowguard/express';
+ * import { rateLimitExpress } from 'limiterx/express';
  *
  * const app = express();
  * app.use(rateLimitExpress({ max: 100, window: '15m' }));
  * ```
  */
-export function rateLimitExpress(config: FlowGuardConfig) {
+export function rateLimitExpress(config: LimiterxConfig) {
   const defaultKeyGenerator = (ctx: RequestContext) => {
     const req = ctx.req as Request;
     return req.ip || '127.0.0.1';
   };
 
-  const resolvedConfig: FlowGuardConfig = {
+  const resolvedConfig: LimiterxConfig = {
     ...config,
     keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
     onLimit: undefined, // Adapter handles onLimit with full context
@@ -71,7 +71,7 @@ export function rateLimitExpress(config: FlowGuardConfig) {
           }
         }
         if (debug) {
-          console.log(`[flowguard:express] DENY key="${result.key}" status=${statusCode}`);
+          console.log(`[limiterx:express] DENY key="${result.key}" status=${statusCode}`);
         }
         res.status(statusCode);
         if (typeof message === 'string') {
@@ -83,7 +83,7 @@ export function rateLimitExpress(config: FlowGuardConfig) {
       }
 
       if (debug) {
-        console.log(`[flowguard:express] ALLOW key="${result.key}" remaining=${result.remaining}`);
+        console.log(`[limiterx:express] ALLOW key="${result.key}" remaining=${result.remaining}`);
       }
 
       next();

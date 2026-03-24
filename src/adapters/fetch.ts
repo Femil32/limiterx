@@ -1,4 +1,4 @@
-import type { FlowGuardConfig, RequestContext } from '../core/types.js';
+import type { LimiterxConfig, RequestContext } from '../core/types.js';
 import { createRateLimiter } from '../core/createRateLimiter.js';
 import { RateLimitError } from '../core/RateLimitError.js';
 
@@ -12,7 +12,7 @@ import { RateLimitError } from '../core/RateLimitError.js';
  *
  * @example
  * ```typescript
- * import { rateLimitFetch } from 'flowguard/fetch';
+ * import { rateLimitFetch } from 'limiterx/fetch';
  *
  * const guardedFetch = rateLimitFetch(fetch, {
  *   max: 10,
@@ -31,7 +31,7 @@ import { RateLimitError } from '../core/RateLimitError.js';
  */
 export function rateLimitFetch(
   fetchFn: typeof fetch,
-  config: FlowGuardConfig,
+  config: LimiterxConfig,
 ): typeof fetch {
   const defaultKeyGenerator = () => 'global';
   const resolvedKeyGenerator = config.keyGenerator ?? defaultKeyGenerator;
@@ -70,13 +70,13 @@ export function rateLimitFetch(
         }
       }
       if (debug) {
-        console.log(`[flowguard:fetch] DENY key="${result.key}" retryAfter=${result.retryAfter}ms`);
+        console.log(`[limiterx:fetch] DENY key="${result.key}" retryAfter=${result.retryAfter}ms`);
       }
       throw new RateLimitError(result);
     }
 
     if (debug) {
-      console.log(`[flowguard:fetch] ALLOW key="${result.key}" remaining=${result.remaining}`);
+      console.log(`[limiterx:fetch] ALLOW key="${result.key}" remaining=${result.remaining}`);
     }
 
     return fetchFn(input, init);

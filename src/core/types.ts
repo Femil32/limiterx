@@ -4,14 +4,14 @@
  *
  * @example
  * ```typescript
- * const config: FlowGuardConfig = {
+ * const config: LimiterxConfig = {
  *   max: 100,
  *   window: '15m',
  *   onLimit: (result) => console.log(`Blocked: ${result.key}`)
  * };
  * ```
  */
-export interface FlowGuardConfig {
+export interface LimiterxConfig {
   /** Maximum number of requests allowed per window. Must be a positive integer. */
   max: number;
   /** Window duration in milliseconds (number) or as a human-readable string ('30s', '5m', '1h', '1d'). */

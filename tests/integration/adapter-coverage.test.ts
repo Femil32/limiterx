@@ -124,7 +124,7 @@ describe('rateLimitExpress — coverage', () => {
     const res1 = await request(app).get('/');
     expect(res1.status).toBe(200);
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[flowguard:express] ALLOW'),
+      expect.stringContaining('[limiterx:express] ALLOW'),
     );
 
     await request(app).get('/');
@@ -133,7 +133,7 @@ describe('rateLimitExpress — coverage', () => {
     const res3 = await request(app).get('/');
     expect(res3.status).toBe(429);
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[flowguard:express] DENY'),
+      expect.stringContaining('[limiterx:express] DENY'),
     );
 
     consoleSpy.mockRestore();
@@ -263,7 +263,7 @@ describe('rateLimitNode — coverage', () => {
       });
     });
 
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[flowguard:node]'));
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[limiterx:node]'));
     consoleSpy.mockRestore();
   });
 
@@ -338,7 +338,7 @@ describe('rateLimitNext — coverage', () => {
     await limiter.check(req, res);
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[flowguard:next] ALLOW'),
+      expect.stringContaining('[limiterx:next] ALLOW'),
     );
     consoleSpy.mockRestore();
   });
@@ -357,7 +357,7 @@ describe('rateLimitNext — coverage', () => {
     await limiter.check(req, res);
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[flowguard:next] DENY'),
+      expect.stringContaining('[limiterx:next] DENY'),
     );
     consoleSpy.mockRestore();
   });
@@ -431,7 +431,7 @@ describe('rateLimitEdge — coverage', () => {
 
     expect(result).toBeUndefined();
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[flowguard:edge] ALLOW'),
+      expect.stringContaining('[limiterx:edge] ALLOW'),
     );
     consoleSpy.mockRestore();
   });
@@ -452,7 +452,7 @@ describe('rateLimitEdge — coverage', () => {
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(429);
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[flowguard:edge] DENY'),
+      expect.stringContaining('[limiterx:edge] DENY'),
     );
     consoleSpy.mockRestore();
   });
@@ -556,13 +556,13 @@ describe('rateLimitKoa — coverage', () => {
     const allowCtx = createMockKoaCtx();
     await middleware(allowCtx as unknown as Parameters<typeof middleware>[0], next);
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[flowguard:koa] ALLOW'),
+      expect.stringContaining('[limiterx:koa] ALLOW'),
     );
 
     const denyCtx = createMockKoaCtx();
     await middleware(denyCtx as unknown as Parameters<typeof middleware>[0], next);
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[flowguard:koa] DENY'),
+      expect.stringContaining('[limiterx:koa] DENY'),
     );
 
     consoleSpy.mockRestore();
@@ -606,13 +606,13 @@ describe('rateLimitFetch — coverage', () => {
     // ALLOW path
     await guarded('https://example.com/api');
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[flowguard:fetch] ALLOW'),
+      expect.stringContaining('[limiterx:fetch] ALLOW'),
     );
 
     // DENY path
     await expect(guarded('https://example.com/api')).rejects.toThrow(RateLimitError);
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[flowguard:fetch] DENY'),
+      expect.stringContaining('[limiterx:fetch] DENY'),
     );
 
     consoleSpy.mockRestore();
@@ -677,7 +677,7 @@ describe('rateLimitAxios — coverage', () => {
     await interceptor({ url: '/test', method: 'GET' });
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[flowguard:axios] ALLOW'),
+      expect.stringContaining('[limiterx:axios] ALLOW'),
     );
     consoleSpy.mockRestore();
   });
@@ -698,7 +698,7 @@ describe('rateLimitAxios — coverage', () => {
     await expect(interceptor({ url: '/test', method: 'GET' })).rejects.toThrow(RateLimitError);
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[flowguard:axios] DENY'),
+      expect.stringContaining('[limiterx:axios] DENY'),
     );
     consoleSpy.mockRestore();
   });
@@ -766,11 +766,11 @@ describe('FixedWindowLimiter — debug mode', () => {
     const store = createMockMemoryStore();
     const limiter = new FixedWindowLimiter(store, 5, 60_000, true);
 
-    const result = await limiter.check('flowguard:debug-allow-key', 'debug-allow-key');
+    const result = await limiter.check('limiterx:debug-allow-key', 'debug-allow-key');
 
     expect(result.allowed).toBe(true);
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[flowguard] ALLOW'),
+      expect.stringContaining('[limiterx] ALLOW'),
     );
     consoleSpy.mockRestore();
   });
@@ -780,12 +780,12 @@ describe('FixedWindowLimiter — debug mode', () => {
     const store = createMockMemoryStore();
     const limiter = new FixedWindowLimiter(store, 5, 60_000, true);
 
-    await limiter.check('flowguard:debug-same-window-key', 'debug-same-window-key');
+    await limiter.check('limiterx:debug-same-window-key', 'debug-same-window-key');
     consoleSpy.mockClear();
-    await limiter.check('flowguard:debug-same-window-key', 'debug-same-window-key');
+    await limiter.check('limiterx:debug-same-window-key', 'debug-same-window-key');
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[flowguard] ALLOW'),
+      expect.stringContaining('[limiterx] ALLOW'),
     );
     consoleSpy.mockRestore();
   });
@@ -795,13 +795,13 @@ describe('FixedWindowLimiter — debug mode', () => {
     const store = createMockMemoryStore();
     const limiter = new FixedWindowLimiter(store, 1, 60_000, true);
 
-    await limiter.check('flowguard:debug-deny-key', 'debug-deny-key');
+    await limiter.check('limiterx:debug-deny-key', 'debug-deny-key');
     consoleSpy.mockClear();
-    const result = await limiter.check('flowguard:debug-deny-key', 'debug-deny-key');
+    const result = await limiter.check('limiterx:debug-deny-key', 'debug-deny-key');
 
     expect(result.allowed).toBe(false);
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[flowguard] DENY'),
+      expect.stringContaining('[limiterx] DENY'),
     );
     consoleSpy.mockRestore();
   });
@@ -811,7 +811,7 @@ describe('FixedWindowLimiter — debug mode', () => {
     const store = createMockMemoryStore();
     const limiter = new FixedWindowLimiter(store, 5, 60_000, false);
 
-    await limiter.check('flowguard:nodebug-key', 'nodebug-key');
+    await limiter.check('limiterx:nodebug-key', 'nodebug-key');
 
     expect(consoleSpy).not.toHaveBeenCalled();
     consoleSpy.mockRestore();

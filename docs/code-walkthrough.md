@@ -1,6 +1,6 @@
-# Flowguard - Code Walkthrough & Security Guide
+# Limiterx - Code Walkthrough & Security Guide
 
-A complete guide to understand the Flowguard codebase, its architecture, and security considerations.
+A complete guide to understand the Limiterx codebase, its architecture, and security considerations.
 
 ---
 
@@ -19,7 +19,7 @@ A complete guide to understand the Flowguard codebase, its architecture, and sec
 
 ## Architecture Overview
 
-Flowguard follows a **core + adapters** pattern:
+Limiterx follows a **core + adapters** pattern:
 
 ```
 +-------------------------------------------------+
@@ -73,7 +73,7 @@ src/
 
 This file defines every interface used in the library. Key types:
 
-- **`FlowGuardConfig`** - What users pass in: `max`, `window`, `keyGenerator`, `skip`, `onLimit`, `message`, `statusCode`, `headers`, `debug`
+- **`LimiterxConfig`** - What users pass in: `max`, `window`, `keyGenerator`, `skip`, `onLimit`, `message`, `statusCode`, `headers`, `debug`
 - **`RateLimiterResult`** - What comes back from `check()`: `allowed`, `remaining`, `retryAfter`, `limit`, `resetTime`
 - **`StorageAdapter`** - Internal interface for storage backends: `get()`, `set()`, `delete()`, `clear()`, `destroy()`
 - **`FixedWindowState`** - The stored state per key: `{ count, windowStart, windowMs }`
@@ -112,7 +112,7 @@ Validates all config fields with specific error codes (V-001 through V-012):
 | V-011 | Config is a plain object | `Config must be a plain object` |
 | V-012 | `message` constraints | Various message validations |
 
-All errors are prefixed with `[flowguard] Invalid config:` for easy identification.
+All errors are prefixed with `[limiterx] Invalid config:` for easy identification.
 
 ### `MemoryStore.ts` - In-Memory Storage
 
@@ -128,7 +128,7 @@ A `Map`-based store that tracks rate limit state per key.
 - Iterates all entries and deletes expired ones
 - `destroy()` clears the interval and all data
 
-**Key insight:** The namespace prefix `flowguard:` is added by `createRateLimiter`, not by MemoryStore. The store is namespace-agnostic.
+**Key insight:** The namespace prefix `limiterx:` is added by `createRateLimiter`, not by MemoryStore. The store is namespace-agnostic.
 
 ### `FixedWindowLimiter.ts` - The Algorithm
 
@@ -163,7 +163,7 @@ const limiter = createRateLimiter({ max: 5, window: '30s' });
 
 **Key behaviors:**
 - Empty key (`""`) falls back to `"global"`
-- Keys are namespaced: `"my-key"` becomes `"flowguard:my-key"`
+- Keys are namespaced: `"my-key"` becomes `"limiterx:my-key"`
 - `onLimit` callback errors are silently swallowed (logged in debug mode)
 - `keyGenerator` errors propagate up (FR-019)
 
@@ -286,17 +286,17 @@ Express Middleware
   v
 createRateLimiter.check("user:123")
   |
-  +-- Namespace: "flowguard:user:123"
+  +-- Namespace: "limiterx:user:123"
   |
   v
 FixedWindowLimiter.check()
   |
-  +-- MemoryStore.get("flowguard:user:123")
+  +-- MemoryStore.get("limiterx:user:123")
   |   Returns { count: 4, windowStart: 1711234560000, windowMs: 30000 }
   |
   +-- count++ -> 5 (within max)
   |
-  +-- MemoryStore.set("flowguard:user:123", { count: 5, ... })
+  +-- MemoryStore.set("limiterx:user:123", { count: 5, ... })
   |
   Returns { allowed: true, remaining: 0, retryAfter: 0 }
         |
@@ -334,13 +334,13 @@ createRateLimiter.check("demo")
 
 ## Security Analysis
 
-### What Flowguard Protects Against
+### What Limiterx Protects Against
 
 1. **Brute force attacks** - Limits login attempts, API calls per user/IP
 2. **DoS from individual clients** - Prevents single clients from overwhelming your server
 3. **Resource exhaustion** - Caps memory usage via `maxKeys` with LRU eviction
 
-### What Flowguard Does NOT Protect Against
+### What Limiterx Does NOT Protect Against
 
 1. **Distributed DoS (DDoS)** - In-memory store is per-process; use Redis-backed solutions for distributed rate limiting
 2. **IP spoofing** - The default key is `req.ip`; ensure your reverse proxy sets `X-Forwarded-For` correctly
@@ -387,7 +387,7 @@ createRateLimiter.check("demo")
 - [ ] **Set appropriate `max` and `window`** -- too generous defeats the purpose
 - [ ] **Monitor rate limit hits** via the `onLimit` callback (log, alert, etc.)
 - [ ] **Use HTTPS** -- rate limiting by IP is meaningless if IPs can be spoofed via unencrypted connections
-- [ ] **Consider distributed rate limiting** for multi-process/multi-server deployments (Flowguard v1 is single-process only)
+- [ ] **Consider distributed rate limiting** for multi-process/multi-server deployments (Limiterx v1 is single-process only)
 - [ ] **Don't expose rate limit internals** to clients beyond standard headers
 
 ---
@@ -444,4 +444,4 @@ The standard `RateLimit-*` headers (RFC draft) are sufficient. Legacy `X-` prefi
 
 ### Why `sideEffects: false`
 
-Enables bundlers (webpack, Rollup, esbuild) to tree-shake unused adapters. If you only import `flowguard/express`, the React hook and Axios interceptor code are eliminated from your bundle.
+Enables bundlers (webpack, Rollup, esbuild) to tree-shake unused adapters. If you only import `limiterx/express`, the React hook and Axios interceptor code are eliminated from your bundle.

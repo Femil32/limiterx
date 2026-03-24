@@ -1,4 +1,4 @@
-import type { FlowGuardConfig, RequestContext } from '../core/types.js';
+import type { LimiterxConfig, RequestContext } from '../core/types.js';
 import { createRateLimiter } from '../core/createRateLimiter.js';
 import { RateLimitError } from '../core/RateLimitError.js';
 
@@ -32,7 +32,7 @@ interface AxiosRequestConfig {
  * @example
  * ```typescript
  * import axios from 'axios';
- * import { rateLimitAxios } from 'flowguard/axios';
+ * import { rateLimitAxios } from 'limiterx/axios';
  *
  * const client = rateLimitAxios(axios.create({ baseURL: 'https://api.example.com' }), {
  *   max: 10,
@@ -51,7 +51,7 @@ interface AxiosRequestConfig {
  */
 export function rateLimitAxios(
   instance: AxiosInstance,
-  config: FlowGuardConfig,
+  config: LimiterxConfig,
 ): AxiosInstance {
   const defaultKeyGenerator = () => 'global';
   const resolvedKeyGenerator = config.keyGenerator ?? defaultKeyGenerator;
@@ -88,13 +88,13 @@ export function rateLimitAxios(
           }
         }
         if (debug) {
-          console.log(`[flowguard:axios] DENY key="${result.key}" retryAfter=${result.retryAfter}ms`);
+          console.log(`[limiterx:axios] DENY key="${result.key}" retryAfter=${result.retryAfter}ms`);
         }
         throw new RateLimitError(result);
       }
 
       if (debug) {
-        console.log(`[flowguard:axios] ALLOW key="${result.key}" remaining=${result.remaining}`);
+        console.log(`[limiterx:axios] ALLOW key="${result.key}" remaining=${result.remaining}`);
       }
 
       return axiosConfig;

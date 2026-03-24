@@ -1,6 +1,6 @@
-# Requirements Quality Checklist: Flowguard Production Readiness
+# Requirements Quality Checklist: Limiterx Production Readiness
 
-**Purpose**: Unit-test the written requirements (completeness, clarity, consistency, measurability)—not implementation behavior—for the flowguard v1.0 production-readiness feature.
+**Purpose**: Unit-test the written requirements (completeness, clarity, consistency, measurability)—not implementation behavior—for the limiterx v1.0 production-readiness feature.
 **Created**: 2026-03-23
 **Feature**: [spec.md](../spec.md)
 

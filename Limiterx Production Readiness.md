@@ -1,4 +1,4 @@
-# flowguard — Product Requirements Document (PRD)
+# limiterx — Product Requirements Document (PRD)
 
 > **Version:** 1.0  
 > **Author:** Femil Savaliya  
@@ -32,7 +32,7 @@
 
 ## 1. Overview
 
-**flowguard** is a universal, production-ready rate limiting library for JavaScript/TypeScript. It works identically in the browser, Node.js, and edge runtimes, and ships first-class adapters for Express, Node.js HTTP, Next.js (API routes + Edge Middleware), Koa, React (hook), and plain fetch/Axios.
+**limiterx** is a universal, production-ready rate limiting library for JavaScript/TypeScript. It works identically in the browser, Node.js, and edge runtimes, and ships first-class adapters for Express, Node.js HTTP, Next.js (API routes + Edge Middleware), Koa, React (hook), and plain fetch/Axios.
 
 The core philosophy is **algorithm flexibility + developer ergonomics**. Developers choose which rate limiting algorithm fits their use case, configure it with a clean unified API, and get consistent behavior whether they are on the frontend or backend.
 
@@ -99,7 +99,7 @@ Every existing rate limiting library has at least one of these problems:
 | `limiter` | ~11M | Token Bucket | ✅ (basic) | ✅ | ✅ | ❌ |
 | `universal-rate-limiter` | ~0 | Fixed Window | ✅ | ✅ | ✅ | ✅ |
 | `@tanstack/pacer` | Growing | Fixed Window | React/Solid | ❌ | ✅ | Partial |
-| **flowguard** | — | Fixed→4 algos | ✅ | ✅ | ✅ | ✅ |
+| **limiterx** | — | Fixed→4 algos | ✅ | ✅ | ✅ | ✅ |
 
 **Unique differentiator:** The only package combining universal runtime support + multiple configurable algorithms + a React hook + backend middleware in a single, maintained, TypeScript-first library.
 
@@ -109,8 +109,8 @@ Every existing rate limiting library has at least one of these problems:
 
 | Property | Value |
 |---|---|
-| npm name | `flowguard` |
-| Import | `import { createRateLimiter } from 'flowguard'` |
+| npm name | `limiterx` |
+| Import | `import { createRateLimiter } from 'limiterx'` |
 | License | MIT |
 | Node.js requirement | ≥ 18.0.0 |
 | TypeScript | ≥ 5.0 |
@@ -123,7 +123,7 @@ Every existing rate limiting library has at least one of these problems:
 ## 7. Architecture Overview
 
 ```
-flowguard/
+limiterx/
 │
 ├── core/                        ← Pure algorithm engine (no framework deps)
 │   ├── algorithms/
@@ -163,7 +163,7 @@ flowguard/
 All adapters share the same base config. This is the single most important DX decision — developers learn one interface.
 
 ```typescript
-interface FlowGuardConfig {
+interface LimiterxConfig {
   // Required
   max: number;                      // Max requests allowed in the window
   window: number | string;          // Window duration. Number = ms. String = '1m', '30s', '1h'
@@ -276,7 +276,7 @@ interface FixedWindowState {
 
 **Config example:**
 ```typescript
-import { createRateLimiter } from 'flowguard';
+import { createRateLimiter } from 'limiterx';
 
 const limiter = createRateLimiter({
   algorithm: 'fixed-window',
@@ -326,7 +326,7 @@ Atomic operations via Lua scripts (same pattern as `rate-limiter-flexible`). Sup
 
 ```typescript
 import express from 'express';
-import { rateLimitExpress } from 'flowguard/express';
+import { rateLimitExpress } from 'limiterx/express';
 
 const app = express();
 
@@ -348,7 +348,7 @@ app.use(rateLimitExpress({
 
 ```typescript
 import http from 'http';
-import { rateLimitNode } from 'flowguard/node';
+import { rateLimitNode } from 'limiterx/node';
 
 const limiter = rateLimitNode({ max: 50, window: '1m' });
 
@@ -367,7 +367,7 @@ const server = http.createServer(async (req, res) => {
 
 ```typescript
 // pages/api/data.ts or app/api/data/route.ts
-import { rateLimitNext } from 'flowguard/next';
+import { rateLimitNext } from 'limiterx/next';
 
 const limiter = rateLimitNext({ max: 20, window: '1m' });
 
@@ -380,7 +380,7 @@ export default async function handler(req, res) {
 
 ```typescript
 // middleware.ts (Edge Middleware)
-import { rateLimitEdge } from 'flowguard/next';
+import { rateLimitEdge } from 'limiterx/next';
 
 export const middleware = rateLimitEdge({
   max: 10,
@@ -393,7 +393,7 @@ export const config = { matcher: ['/api/:path*'] };
 
 ```typescript
 import Koa from 'koa';
-import { rateLimitKoa } from 'flowguard/koa';
+import { rateLimitKoa } from 'limiterx/koa';
 
 const app = new Koa();
 app.use(rateLimitKoa({ max: 60, window: '1m' }));
@@ -402,7 +402,7 @@ app.use(rateLimitKoa({ max: 60, window: '1m' }));
 ### 11.5 React Hook
 
 ```typescript
-import { useRateLimit } from 'flowguard/react';
+import { useRateLimit } from 'limiterx/react';
 
 function SubmitButton() {
   const { allowed, remaining, retryAfter, attempt } = useRateLimit('form-submit', {
@@ -433,7 +433,7 @@ function SubmitButton() {
 ### 11.6 Fetch Wrapper
 
 ```typescript
-import { rateLimitFetch } from 'flowguard/fetch';
+import { rateLimitFetch } from 'limiterx/fetch';
 
 const guardedFetch = rateLimitFetch(fetch, {
   max: 10,
@@ -449,7 +449,7 @@ const res = await guardedFetch('https://api.example.com/data');
 
 ```typescript
 import axios from 'axios';
-import { rateLimitAxios } from 'flowguard/axios';
+import { rateLimitAxios } from 'limiterx/axios';
 
 const client = rateLimitAxios(axios.create(), {
   max: 10,
@@ -469,7 +469,7 @@ const res = await client.get('/api/data');
 - Document the `trust proxy` requirement in README
 
 ### 12.2 Key Collision Prevention
-- Keys are namespaced internally: `flowguard:${userKey}` to avoid collisions with other data in the same store
+- Keys are namespaced internally: `limiterx:${userKey}` to avoid collisions with other data in the same store
 - If using RedisStore (v1.1), namespace is configurable via `keyPrefix` option
 
 ### 12.3 Memory DoS Prevention
@@ -539,16 +539,16 @@ const res = await client.get('/api/data');
 - Config validation runs at `createRateLimiter()` call time, not at request time
 - Errors include the offending field name and expected vs received values:
   ```
-  [flowguard] Invalid config: 'max' must be a positive integer, received: -5
-  [flowguard] Invalid config: 'window' string '2x' is not a valid duration
+  [limiterx] Invalid config: 'max' must be a positive integer, received: -5
+  [limiterx] Invalid config: 'window' string '2x' is not a valid duration
   ```
 
 ### 14.4 Tree-Shaking
 - `"sideEffects": false` in `package.json`
 - Each adapter is a separate entry point — bundlers only include what is imported:
   ```typescript
-  import { rateLimitExpress } from 'flowguard/express'; // only Express adapter in bundle
-  import { useRateLimit } from 'flowguard/react';       // only React hook in bundle
+  import { rateLimitExpress } from 'limiterx/express'; // only Express adapter in bundle
+  import { useRateLimit } from 'limiterx/react';       // only React hook in bundle
   ```
 
 ---
@@ -556,7 +556,7 @@ const res = await client.get('/api/data');
 ## 15. Project Structure
 
 ```
-flowguard/
+limiterx/
 ├── src/
 │   ├── core/
 │   │   ├── algorithms/
@@ -602,7 +602,7 @@ flowguard/
 ├── vitest.config.ts
 ├── CHANGELOG.md
 ├── README.md
-└── FLOWGUARD_PRD.md                         ← this file
+└── LIMITERX_PRD.md                          ← this file
 ```
 
 ---
@@ -615,7 +615,7 @@ flowguard/
 
 **Deliverables:**
 - [ ] Repo scaffolding: `package.json`, `tsconfig.json`, `vitest.config.ts`, `.gitignore`
-- [ ] `types.ts` — `FlowGuardConfig`, `RateLimiterResult`, `StorageAdapter`, `RequestContext`
+- [ ] `types.ts` — `LimiterxConfig`, `RateLimiterResult`, `StorageAdapter`, `RequestContext`
 - [ ] `parseWindow.ts` — human-readable window string parser with tests
 - [ ] `validateConfig.ts` — config validation with clear error messages
 - [ ] `MemoryStore.ts` — in-memory `Map`-based store with LRU eviction + TTL cleanup
@@ -657,24 +657,24 @@ flowguard/
 - [ ] `examples/react-vite-app/` — runnable Vite + React demo with UI showing remaining/reset state
 - [ ] Verify tree-shaking — each adapter entry point bundles independently (use `bundlesize` or `size-limit`)
 
-**Exit criteria:** React hook renders correctly in both Vite and Next.js. Bundle size of `flowguard/react` alone is under 3KB minified+gzipped.
+**Exit criteria:** React hook renders correctly in both Vite and Next.js. Bundle size of `limiterx/react` alone is under 3KB minified+gzipped.
 
 ---
 
 ### Phase 4 — Production Polish & Publish (Week 4)
 
-**Goal:** Make flowguard publishable and portfolio-quality.
+**Goal:** Make limiterx publishable and portfolio-quality.
 
 **Deliverables:**
 - [ ] Full README with: install, quick start, per-algorithm explanation, per-adapter docs, config reference table, FAQ
 - [ ] `CHANGELOG.md` following Keep a Changelog format
 - [ ] GitHub Actions CI: lint (ESLint) → test (Vitest) → build (tsc) → coverage report
 - [ ] Automated npm publish on git tag (`v1.0.0`)
-- [ ] Benchmark script: compare flowguard Fixed Window vs `express-rate-limit` at 10K req/s
-- [ ] Publish to npm as `flowguard`
+- [ ] Benchmark script: compare limiterx Fixed Window vs `express-rate-limit` at 10K req/s
+- [ ] Publish to npm as `limiterx`
 - [ ] Dev.to article: "I built a universal rate limiter npm package — here's how the algorithms work"
 
-**Exit criteria:** `npm publish` succeeds. Package is installable via `npm i flowguard`. README renders correctly on npmjs.com.
+**Exit criteria:** `npm publish` succeeds. Package is installable via `npm i limiterx`. README renders correctly on npmjs.com.
 
 ---
 
@@ -699,7 +699,7 @@ flowguard/
 
 ```json
 {
-  "name": "flowguard",
+  "name": "limiterx",
   "version": "1.0.0",
   "license": "MIT",
   "engines": { "node": ">=18.0.0" },
@@ -757,4 +757,4 @@ Steps:
 
 ---
 
-*This PRD is the source of truth for flowguard v1.0 and v1.1. All implementation decisions should be traceable back to a requirement in this document. When in doubt about scope, refer to Section 3 (Goals & Non-Goals) first.*
+*This PRD is the source of truth for limiterx v1.0 and v1.1. All implementation decisions should be traceable back to a requirement in this document. When in doubt about scope, refer to Section 3 (Goals & Non-Goals) first.*

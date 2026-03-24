@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import type { FlowGuardConfig, RateLimiterResult, RequestContext } from '../core/types.js';
+import type { LimiterxConfig, RateLimiterResult, RequestContext } from '../core/types.js';
 import { createRateLimiter } from '../core/createRateLimiter.js';
 import { setRateLimitHeadersFull } from './internal/rate-limit-headers.js';
 
@@ -21,7 +21,7 @@ export interface NodeRateLimiter {
  * @example
  * ```typescript
  * import http from 'http';
- * import { rateLimitNode } from 'flowguard/node';
+ * import { rateLimitNode } from 'limiterx/node';
  *
  * const limiter = rateLimitNode({ max: 50, window: '1m' });
  *
@@ -36,13 +36,13 @@ export interface NodeRateLimiter {
  * }).listen(3000);
  * ```
  */
-export function rateLimitNode(config: FlowGuardConfig): NodeRateLimiter {
+export function rateLimitNode(config: LimiterxConfig): NodeRateLimiter {
   const defaultKeyGenerator = (ctx: RequestContext) => {
     const req = ctx.req as IncomingMessage;
     return req.socket?.remoteAddress || '127.0.0.1';
   };
 
-  const resolvedConfig: FlowGuardConfig = {
+  const resolvedConfig: LimiterxConfig = {
     ...config,
     keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
     onLimit: undefined,
@@ -94,7 +94,7 @@ export function rateLimitNode(config: FlowGuardConfig): NodeRateLimiter {
 
       if (debug) {
         const action = result.allowed ? 'ALLOW' : 'DENY';
-        console.log(`[flowguard:node] ${action} key="${result.key}" remaining=${result.remaining}`);
+        console.log(`[limiterx:node] ${action} key="${result.key}" remaining=${result.remaining}`);
       }
 
       return result;

@@ -7,7 +7,7 @@
 
 All backend adapters share these guarantees:
 
-1. **Config shape**: Accept `FlowGuardConfig` (same as core) with adapter-specific defaults for `keyGenerator`.
+1. **Config shape**: Accept `LimiterxConfig` (same as core) with adapter-specific defaults for `keyGenerator`.
 2. **HTTP headers on every response** (when `config.headers !== false`):
    - `RateLimit-Limit: {max}` (integer)
    - `RateLimit-Remaining: {remaining}` (integer, >= 0)
@@ -23,15 +23,15 @@ All backend adapters share these guarantees:
 
 ---
 
-## `flowguard/express` — Express Middleware
+## `limiterx/express` — Express Middleware
 
-### `rateLimitExpress(config: FlowGuardConfig): express.RequestHandler`
+### `rateLimitExpress(config: LimiterxConfig): express.RequestHandler`
 
 **Signature**:
 ```typescript
-import { rateLimitExpress } from 'flowguard/express';
+import { rateLimitExpress } from 'limiterx/express';
 
-function rateLimitExpress(config: FlowGuardConfig): (
+function rateLimitExpress(config: LimiterxConfig): (
   req: express.Request,
   res: express.Response,
   next: express.NextFunction
@@ -47,7 +47,7 @@ function rateLimitExpress(config: FlowGuardConfig): (
 **Example**:
 ```typescript
 import express from 'express';
-import { rateLimitExpress } from 'flowguard/express';
+import { rateLimitExpress } from 'limiterx/express';
 
 const app = express();
 app.use(rateLimitExpress({ max: 100, window: '15m' }));
@@ -55,19 +55,19 @@ app.use(rateLimitExpress({ max: 100, window: '15m' }));
 
 ---
 
-## `flowguard/node` — Raw Node.js HTTP
+## `limiterx/node` — Raw Node.js HTTP
 
-### `rateLimitNode(config: FlowGuardConfig): NodeRateLimiter`
+### `rateLimitNode(config: LimiterxConfig): NodeRateLimiter`
 
 **Signature**:
 ```typescript
-import { rateLimitNode } from 'flowguard/node';
+import { rateLimitNode } from 'limiterx/node';
 
 interface NodeRateLimiter {
   check(req: http.IncomingMessage, res: http.ServerResponse): Promise<RateLimiterResult>;
 }
 
-function rateLimitNode(config: FlowGuardConfig): NodeRateLimiter;
+function rateLimitNode(config: LimiterxConfig): NodeRateLimiter;
 ```
 
 **Behavior**:
@@ -79,7 +79,7 @@ function rateLimitNode(config: FlowGuardConfig): NodeRateLimiter;
 **Example**:
 ```typescript
 import http from 'http';
-import { rateLimitNode } from 'flowguard/node';
+import { rateLimitNode } from 'limiterx/node';
 
 const limiter = rateLimitNode({ max: 50, window: '1m' });
 
@@ -96,21 +96,21 @@ http.createServer(async (req, res) => {
 
 ---
 
-## `flowguard/next` — Next.js API Routes + Edge Middleware
+## `limiterx/next` — Next.js API Routes + Edge Middleware
 
-### `rateLimitNext(config: FlowGuardConfig): NextRateLimiter`
+### `rateLimitNext(config: LimiterxConfig): NextRateLimiter`
 
 For API routes (Pages Router and App Router):
 
 **Signature**:
 ```typescript
-import { rateLimitNext } from 'flowguard/next';
+import { rateLimitNext } from 'limiterx/next';
 
 interface NextRateLimiter {
   check(req: NextApiRequest, res: NextApiResponse): Promise<RateLimiterResult>;
 }
 
-function rateLimitNext(config: FlowGuardConfig): NextRateLimiter;
+function rateLimitNext(config: LimiterxConfig): NextRateLimiter;
 ```
 
 **Behavior**:
@@ -118,15 +118,15 @@ function rateLimitNext(config: FlowGuardConfig): NextRateLimiter;
 - When denied, returns `result` with `allowed: false` — the handler should `return` immediately
 - Default `keyGenerator`: extracts IP from `req.headers['x-forwarded-for']` or `req.socket.remoteAddress`
 
-### `rateLimitEdge(config: FlowGuardConfig): (request: NextRequest) => Promise<Response | undefined>`
+### `rateLimitEdge(config: LimiterxConfig): (request: NextRequest) => Promise<Response | undefined>`
 
 For Edge Middleware:
 
 **Signature**:
 ```typescript
-import { rateLimitEdge } from 'flowguard/next';
+import { rateLimitEdge } from 'limiterx/next';
 
-function rateLimitEdge(config: FlowGuardConfig): (
+function rateLimitEdge(config: LimiterxConfig): (
   request: NextRequest
 ) => Promise<Response | undefined>;
 ```
@@ -140,15 +140,15 @@ function rateLimitEdge(config: FlowGuardConfig): (
 
 ---
 
-## `flowguard/koa` — Koa Middleware
+## `limiterx/koa` — Koa Middleware
 
-### `rateLimitKoa(config: FlowGuardConfig): koa.Middleware`
+### `rateLimitKoa(config: LimiterxConfig): koa.Middleware`
 
 **Signature**:
 ```typescript
-import { rateLimitKoa } from 'flowguard/koa';
+import { rateLimitKoa } from 'limiterx/koa';
 
-function rateLimitKoa(config: FlowGuardConfig): (
+function rateLimitKoa(config: LimiterxConfig): (
   ctx: koa.Context,
   next: koa.Next
 ) => Promise<void>;
@@ -163,7 +163,7 @@ function rateLimitKoa(config: FlowGuardConfig): (
 **Example**:
 ```typescript
 import Koa from 'koa';
-import { rateLimitKoa } from 'flowguard/koa';
+import { rateLimitKoa } from 'limiterx/koa';
 
 const app = new Koa();
 app.use(rateLimitKoa({ max: 60, window: '1m' }));

@@ -1,4 +1,4 @@
-# Data Model: Flowguard Production Readiness
+# Data Model: Limiterx Production Readiness
 
 **Feature Branch**: `001-production-readiness`  
 **Date**: 2026-03-23  
@@ -6,7 +6,7 @@
 
 ## Entities
 
-### FlowGuardConfig
+### LimiterxConfig
 
 The unified configuration object accepted by `createRateLimiter()` and all adapter factory functions.
 
@@ -24,7 +24,7 @@ The unified configuration object accepted by `createRateLimiter()` and all adapt
 | `message` | `string \| object` | No | `'Too many requests'` | String or serializable object |
 | `statusCode` | `number` | No | `429` | Integer between 100–599 |
 
-**v1.0 storage**: `FlowGuardConfig` does **not** expose a `store` field. The implementation always uses an internal `MemoryStore` sized and tuned by `maxKeys` (and related internal defaults; see `MemoryStore` entity). See `spec.md` clarifications and FR-006/FR-016.
+**v1.0 storage**: `LimiterxConfig` does **not** expose a `store` field. The implementation always uses an internal `MemoryStore` sized and tuned by `maxKeys` (and related internal defaults; see `MemoryStore` entity). See `spec.md` clarifications and FR-006/FR-016.
 
 **Relationships**: Consumed by `createRateLimiter()` → produces a `RateLimiter` instance. Each adapter wraps this config with framework-specific defaults.
 
@@ -148,7 +148,7 @@ The core limiter instance created by `createRateLimiter()`.
 ## Entity Relationship Diagram
 
 ```
-FlowGuardConfig ──creates──▶ RateLimiter
+LimiterxConfig ──creates──▶ RateLimiter
                                 │
                     uses ┌──────┴──────┐
                          │             │
@@ -175,15 +175,15 @@ RequestContext ──extended by──▶ Adapter-specific context types
 
 | Rule | Field | Constraint | Error Message |
 |------|-------|-----------|---------------|
-| V-001 | `max` | `Number.isInteger(max) && max > 0` | `[flowguard] Invalid config: 'max' must be a positive integer, received: {value}` |
-| V-002 | `window` | Valid duration string or positive number | `[flowguard] Invalid config: 'window' must be a positive number (ms) or duration string ('30s', '5m', '1h'), received: {value}` |
-| V-003 | `window` (string) | Matches `/^(\d+)(ms\|s\|m\|h\|d)$/` | `[flowguard] Invalid config: 'window' string '{value}' is not a valid duration format. Expected: '500ms', '30s', '5m', '1h', '1d'` |
-| V-004 | `algorithm` | `=== 'fixed-window'` or `undefined` | `[flowguard] Invalid config: 'algorithm' must be 'fixed-window', received: {value}` |
-| V-005 | `keyGenerator` | `typeof fn === 'function'` or `undefined` | `[flowguard] Invalid config: 'keyGenerator' must be a function, received: {typeof value}` |
-| V-006 | `skip` | `typeof fn === 'function'` or `undefined` | `[flowguard] Invalid config: 'skip' must be a function, received: {typeof value}` |
-| V-007 | `onLimit` | `typeof fn === 'function'` or `undefined` | `[flowguard] Invalid config: 'onLimit' must be a function, received: {typeof value}` |
-| V-008 | `statusCode` | `Number.isInteger(sc) && sc >= 100 && sc <= 599` | `[flowguard] Invalid config: 'statusCode' must be an integer between 100-599, received: {value}` |
-| V-009 | `headers` | `typeof h === 'boolean'` or `undefined` | `[flowguard] Invalid config: 'headers' must be a boolean, received: {typeof value}` |
-| V-010 | `maxKeys` | `undefined` or (`Number.isInteger(v) && v > 0`) | `[flowguard] Invalid config: 'maxKeys' must be a positive integer, received: {value}` |
-| V-011 | `debug` | `undefined` or `typeof v === 'boolean'` | `[flowguard] Invalid config: 'debug' must be a boolean, received: {typeof value}` |
-| V-012 | `message` | `undefined`, any `string`, or a non-null `object` that is not an array (plain object for JSON response bodies) | `[flowguard] Invalid config: 'message' must be a string or non-array object, received: {typeof value}` |
+| V-001 | `max` | `Number.isInteger(max) && max > 0` | `[limiterx] Invalid config: 'max' must be a positive integer, received: {value}` |
+| V-002 | `window` | Valid duration string or positive number | `[limiterx] Invalid config: 'window' must be a positive number (ms) or duration string ('30s', '5m', '1h'), received: {value}` |
+| V-003 | `window` (string) | Matches `/^(\d+)(ms\|s\|m\|h\|d)$/` | `[limiterx] Invalid config: 'window' string '{value}' is not a valid duration format. Expected: '500ms', '30s', '5m', '1h', '1d'` |
+| V-004 | `algorithm` | `=== 'fixed-window'` or `undefined` | `[limiterx] Invalid config: 'algorithm' must be 'fixed-window', received: {value}` |
+| V-005 | `keyGenerator` | `typeof fn === 'function'` or `undefined` | `[limiterx] Invalid config: 'keyGenerator' must be a function, received: {typeof value}` |
+| V-006 | `skip` | `typeof fn === 'function'` or `undefined` | `[limiterx] Invalid config: 'skip' must be a function, received: {typeof value}` |
+| V-007 | `onLimit` | `typeof fn === 'function'` or `undefined` | `[limiterx] Invalid config: 'onLimit' must be a function, received: {typeof value}` |
+| V-008 | `statusCode` | `Number.isInteger(sc) && sc >= 100 && sc <= 599` | `[limiterx] Invalid config: 'statusCode' must be an integer between 100-599, received: {value}` |
+| V-009 | `headers` | `typeof h === 'boolean'` or `undefined` | `[limiterx] Invalid config: 'headers' must be a boolean, received: {typeof value}` |
+| V-010 | `maxKeys` | `undefined` or (`Number.isInteger(v) && v > 0`) | `[limiterx] Invalid config: 'maxKeys' must be a positive integer, received: {value}` |
+| V-011 | `debug` | `undefined` or `typeof v === 'boolean'` | `[limiterx] Invalid config: 'debug' must be a boolean, received: {typeof value}` |
+| V-012 | `message` | `undefined`, any `string`, or a non-null `object` that is not an array (plain object for JSON response bodies) | `[limiterx] Invalid config: 'message' must be a string or non-array object, received: {typeof value}` |

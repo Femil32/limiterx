@@ -1,10 +1,10 @@
-import type { FlowGuardConfig, RateLimiter, RateLimiterResult } from './types.js';
+import type { LimiterxConfig, RateLimiter, RateLimiterResult } from './types.js';
 import { validateConfig } from './validateConfig.js';
 import { parseWindow } from './parseWindow.js';
 import { MemoryStore } from './storage/MemoryStore.js';
 import { FixedWindowLimiter } from './algorithms/FixedWindowLimiter.js';
 
-const KEY_PREFIX = 'flowguard:';
+const KEY_PREFIX = 'limiterx:';
 
 /**
  * Create a configured rate limiter instance.
@@ -15,7 +15,7 @@ const KEY_PREFIX = 'flowguard:';
  *
  * @example
  * ```typescript
- * import { createRateLimiter } from 'flowguard';
+ * import { createRateLimiter } from 'limiterx';
  *
  * const limiter = createRateLimiter({
  *   max: 100,
@@ -26,7 +26,7 @@ const KEY_PREFIX = 'flowguard:';
  * const result = await limiter.check('user-123');
  * ```
  */
-export function createRateLimiter(config: FlowGuardConfig): RateLimiter {
+export function createRateLimiter(config: LimiterxConfig): RateLimiter {
   const validated = validateConfig(config);
   const windowMs = parseWindow(validated.window);
   const store = new MemoryStore({ maxKeys: validated.maxKeys });

@@ -1,4 +1,4 @@
-# Flowguard
+# Limiterx
 
 Universal production-ready rate limiting for JavaScript/TypeScript. Works in Node.js, browsers, edge runtimes, and Bun.
 
@@ -17,7 +17,7 @@ Universal production-ready rate limiting for JavaScript/TypeScript. Works in Nod
 ## Installation
 
 ```bash
-npm install flowguard
+npm install limiterx
 ```
 
 ## Quick Start
@@ -26,7 +26,7 @@ npm install flowguard
 
 ```typescript
 import express from 'express';
-import { rateLimitExpress } from 'flowguard/express';
+import { rateLimitExpress } from 'limiterx/express';
 
 const app = express();
 
@@ -45,7 +45,7 @@ app.listen(3000);
 ### Next.js API Route
 
 ```typescript
-import { rateLimitNext } from 'flowguard/next';
+import { rateLimitNext } from 'limiterx/next';
 
 const limiter = rateLimitNext({ max: 20, window: '1m' });
 
@@ -59,7 +59,7 @@ export async function GET(req, res) {
 ### Next.js Edge Middleware
 
 ```typescript
-import { rateLimitEdge } from 'flowguard/next';
+import { rateLimitEdge } from 'limiterx/next';
 
 export const middleware = rateLimitEdge({
   max: 10,
@@ -72,7 +72,7 @@ export const config = { matcher: ['/api/:path*'] };
 ### React Hook
 
 ```typescript
-import { useRateLimit } from 'flowguard/react';
+import { useRateLimit } from 'limiterx/react';
 
 function SubmitButton() {
   const { allowed, remaining, attempt } = useRateLimit('form-submit', {
@@ -91,7 +91,7 @@ function SubmitButton() {
 ### Fetch Wrapper
 
 ```typescript
-import { rateLimitFetch } from 'flowguard/fetch';
+import { rateLimitFetch } from 'limiterx/fetch';
 
 const guardedFetch = rateLimitFetch(fetch, {
   max: 10,
@@ -104,7 +104,7 @@ const res = await guardedFetch('https://api.example.com/data');
 ### Core API (No Framework)
 
 ```typescript
-import { createRateLimiter } from 'flowguard';
+import { createRateLimiter } from 'limiterx';
 
 const limiter = createRateLimiter({
   max: 100,
@@ -120,14 +120,14 @@ const result = await limiter.check('user-123');
 
 | Adapter | Import | Type |
 |---------|--------|------|
-| Express | `flowguard/express` | Backend middleware |
-| Node HTTP | `flowguard/node` | Backend (developer-controlled response) |
-| Next.js API | `flowguard/next` | Backend (API routes) |
-| Next.js Edge | `flowguard/next` | Backend (Edge middleware) |
-| Koa | `flowguard/koa` | Backend middleware |
-| React | `flowguard/react` | Frontend hook |
-| Fetch | `flowguard/fetch` | Frontend wrapper |
-| Axios | `flowguard/axios` | Frontend interceptor |
+| Express | `limiterx/express` | Backend middleware |
+| Node HTTP | `limiterx/node` | Backend (developer-controlled response) |
+| Next.js API | `limiterx/next` | Backend (API routes) |
+| Next.js Edge | `limiterx/next` | Backend (Edge middleware) |
+| Koa | `limiterx/koa` | Backend middleware |
+| React | `limiterx/react` | Frontend hook |
+| Fetch | `limiterx/fetch` | Frontend wrapper |
+| Axios | `limiterx/axios` | Frontend interceptor |
 
 ## Configuration
 
@@ -203,8 +203,8 @@ const limiter = createRateLimiter({
   window: '1m',
   debug: true,
 });
-// Console: [flowguard] ALLOW key="user-123" count=1 remaining=9 (new window)
-// Console: [flowguard] DENY key="user-123" count=10 max=10 retryAfter=45000ms
+// Console: [limiterx] ALLOW key="user-123" count=1 remaining=9 (new window)
+// Console: [limiterx] DENY key="user-123" count=10 max=10 retryAfter=45000ms
 ```
 
 ## TypeScript
@@ -212,7 +212,7 @@ const limiter = createRateLimiter({
 Full TypeScript support with strict types:
 
 ```typescript
-import type { FlowGuardConfig, RateLimiterResult, RateLimiter } from 'flowguard';
+import type { LimiterxConfig, RateLimiterResult, RateLimiter } from 'limiterx';
 ```
 
 ## Publishing
@@ -221,8 +221,8 @@ This package is published to npm with provenance. To publish a new version:
 
 1. Update version in `package.json`
 2. Update `CHANGELOG.md`
-3. Commit and tag: `git tag v1.0.0`
-4. Push tag: `git push origin v1.0.0`
+3. Commit and tag: `git tag vX.Y.Z` (match `package.json`)
+4. Push tag: `git push origin vX.Y.Z`
 5. CI will publish automatically (requires `NPM_TOKEN` secret)
 
 ## Requirements

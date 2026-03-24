@@ -22,7 +22,7 @@ export class FixedWindowLimiter {
   /**
    * Execute a rate limit check for the given namespaced key.
    *
-   * @param namespacedKey - The full storage key (already namespaced with 'flowguard:')
+   * @param namespacedKey - The full storage key (already namespaced with 'limiterx:')
    * @param displayKey - The user-facing key for the result
    * @returns Rate limit result
    */
@@ -40,7 +40,7 @@ export class FixedWindowLimiter {
       // Same window — check if limit exceeded
       if (state.count >= this.max) {
         if (this.debug) {
-          console.log(`[flowguard] DENY key="${displayKey}" count=${state.count} max=${this.max} retryAfter=${retryAfterMs}ms`);
+          console.log(`[limiterx] DENY key="${displayKey}" count=${state.count} max=${this.max} retryAfter=${retryAfterMs}ms`);
         }
         return {
           allowed: false,
@@ -58,7 +58,7 @@ export class FixedWindowLimiter {
       const remaining = Math.max(0, this.max - newCount);
 
       if (this.debug) {
-        console.log(`[flowguard] ALLOW key="${displayKey}" count=${newCount} remaining=${remaining}`);
+        console.log(`[limiterx] ALLOW key="${displayKey}" count=${newCount} remaining=${remaining}`);
       }
 
       return {
@@ -76,7 +76,7 @@ export class FixedWindowLimiter {
     const remaining = this.max - 1;
 
     if (this.debug) {
-      console.log(`[flowguard] ALLOW key="${displayKey}" count=1 remaining=${remaining} (new window)`);
+      console.log(`[limiterx] ALLOW key="${displayKey}" count=1 remaining=${remaining} (new window)`);
     }
 
     return {

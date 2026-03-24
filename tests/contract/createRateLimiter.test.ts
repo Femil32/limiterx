@@ -46,7 +46,7 @@ describe('createRateLimiter', () => {
       const result = await limiter.check('user-123')
       // The public key should not contain the internal prefix
       expect(result.key).toBe('user-123')
-      expect(result.key).not.toContain('flowguard:')
+      expect(result.key).not.toContain('limiterx:')
     })
   })
 
@@ -213,11 +213,11 @@ describe('createRateLimiter', () => {
 
   describe('configuration validation', () => {
     it('throws on invalid config', () => {
-      expect(() => createRateLimiter({ max: -1, window: '1m' })).toThrow('[flowguard]')
+      expect(() => createRateLimiter({ max: -1, window: '1m' })).toThrow('[limiterx]')
     })
 
     it('throws on invalid window', () => {
-      expect(() => createRateLimiter({ max: 10, window: 'bad' })).toThrow('[flowguard]')
+      expect(() => createRateLimiter({ max: 10, window: 'bad' })).toThrow('[limiterx]')
     })
   })
 })

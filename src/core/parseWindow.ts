@@ -16,7 +16,7 @@ export function parseWindow(window: string | number): number {
   if (typeof window === 'number') {
     if (!Number.isFinite(window) || window <= 0) {
       throw new Error(
-        `[flowguard] Invalid config: 'window' must be a positive number (ms) or duration string ('30s', '5m', '1h'), received: ${window}`,
+        `[limiterx] Invalid config: 'window' must be a positive number (ms) or duration string ('30s', '5m', '1h'), received: ${window}`,
       );
     }
     return window;
@@ -24,7 +24,7 @@ export function parseWindow(window: string | number): number {
 
   if (typeof window !== 'string') {
     throw new Error(
-      `[flowguard] Invalid config: 'window' must be a positive number (ms) or duration string ('30s', '5m', '1h'), received: ${typeof window}`,
+      `[limiterx] Invalid config: 'window' must be a positive number (ms) or duration string ('30s', '5m', '1h'), received: ${typeof window}`,
     );
   }
 
@@ -33,7 +33,7 @@ export function parseWindow(window: string | number): number {
 
   if (!match) {
     throw new Error(
-      `[flowguard] Invalid config: 'window' string '${window}' is not a valid duration format. Expected: '500ms', '30s', '5m', '1h', '1d'`,
+      `[limiterx] Invalid config: 'window' string '${window}' is not a valid duration format. Expected: '500ms', '30s', '5m', '1h', '1d'`,
     );
   }
 
@@ -52,7 +52,7 @@ export function parseWindow(window: string | number): number {
 
   if (ms < 1) {
     throw new Error(
-      `[flowguard] Invalid config: 'window' string '${window}' is not a valid duration format. Expected: '500ms', '30s', '5m', '1h', '1d'`,
+      `[limiterx] Invalid config: 'window' string '${window}' is not a valid duration format. Expected: '500ms', '30s', '5m', '1h', '1d'`,
     );
   }
 

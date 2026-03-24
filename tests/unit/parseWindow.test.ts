@@ -62,57 +62,57 @@ describe('parseWindow', () => {
 
   describe('invalid string inputs', () => {
     it("throws for 'invalid'", () => {
-      expect(() => parseWindow('invalid')).toThrow('[flowguard]')
+      expect(() => parseWindow('invalid')).toThrow('[limiterx]')
     })
 
     it("throws for '2x' (unknown unit)", () => {
-      expect(() => parseWindow('2x')).toThrow('[flowguard]')
+      expect(() => parseWindow('2x')).toThrow('[limiterx]')
     })
 
     it('throws for empty string', () => {
-      expect(() => parseWindow('')).toThrow('[flowguard]')
+      expect(() => parseWindow('')).toThrow('[limiterx]')
     })
 
     it("throws for '0ms' (zero duration)", () => {
-      expect(() => parseWindow('0ms')).toThrow('[flowguard]')
+      expect(() => parseWindow('0ms')).toThrow('[limiterx]')
     })
 
     it("throws for 'mins' (plural unit)", () => {
-      expect(() => parseWindow('mins')).toThrow('[flowguard]')
+      expect(() => parseWindow('mins')).toThrow('[limiterx]')
     })
 
     it("throws for 'hrs' (plural unit)", () => {
-      expect(() => parseWindow('hrs')).toThrow('[flowguard]')
+      expect(() => parseWindow('hrs')).toThrow('[limiterx]')
     })
 
     it("throws for '30 s' (space before unit)", () => {
-      expect(() => parseWindow('30 s')).toThrow('[flowguard]')
+      expect(() => parseWindow('30 s')).toThrow('[limiterx]')
     })
 
     it("throws for 'abc30s' (leading letters)", () => {
-      expect(() => parseWindow('abc30s')).toThrow('[flowguard]')
+      expect(() => parseWindow('abc30s')).toThrow('[limiterx]')
     })
   })
 
   describe('invalid numeric inputs', () => {
     it('throws for negative numbers', () => {
-      expect(() => parseWindow(-1000)).toThrow('[flowguard]')
+      expect(() => parseWindow(-1000)).toThrow('[limiterx]')
     })
 
     it('throws for 0', () => {
-      expect(() => parseWindow(0)).toThrow('[flowguard]')
+      expect(() => parseWindow(0)).toThrow('[limiterx]')
     })
 
     it('throws for NaN', () => {
-      expect(() => parseWindow(NaN)).toThrow('[flowguard]')
+      expect(() => parseWindow(NaN)).toThrow('[limiterx]')
     })
 
     it('throws for Infinity', () => {
-      expect(() => parseWindow(Infinity)).toThrow('[flowguard]')
+      expect(() => parseWindow(Infinity)).toThrow('[limiterx]')
     })
 
     it('throws for -Infinity', () => {
-      expect(() => parseWindow(-Infinity)).toThrow('[flowguard]')
+      expect(() => parseWindow(-Infinity)).toThrow('[limiterx]')
     })
   })
 })

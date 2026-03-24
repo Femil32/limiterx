@@ -34,7 +34,7 @@ interface WindowState {
  *
  * @example
  * ```typescript
- * import { useRateLimit } from 'flowguard/react';
+ * import { useRateLimit } from 'limiterx/react';
  *
  * function SubmitButton() {
  *   const { allowed, remaining, retryAfter, attempt, reset } = useRateLimit('form-submit', {

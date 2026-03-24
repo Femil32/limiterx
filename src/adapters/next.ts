@@ -1,4 +1,4 @@
-import type { FlowGuardConfig, RateLimiterResult, RequestContext } from '../core/types.js';
+import type { LimiterxConfig, RateLimiterResult, RequestContext } from '../core/types.js';
 import { createRateLimiter } from '../core/createRateLimiter.js';
 import { setRateLimitHeadersFull } from './internal/rate-limit-headers.js';
 
@@ -42,7 +42,7 @@ interface NextRequest {
  *
  * @example
  * ```typescript
- * import { rateLimitNext } from 'flowguard/next';
+ * import { rateLimitNext } from 'limiterx/next';
  *
  * const limiter = rateLimitNext({ max: 20, window: '1m' });
  *
@@ -53,7 +53,7 @@ interface NextRequest {
  * }
  * ```
  */
-export function rateLimitNext(config: FlowGuardConfig): NextRateLimiter {
+export function rateLimitNext(config: LimiterxConfig): NextRateLimiter {
   const defaultKeyGenerator = (ctx: RequestContext) => {
     const req = ctx.req as NextApiRequest;
     const forwarded = req.headers['x-forwarded-for'];
@@ -61,7 +61,7 @@ export function rateLimitNext(config: FlowGuardConfig): NextRateLimiter {
     return forwardedIp || req.socket?.remoteAddress || '127.0.0.1';
   };
 
-  const resolvedConfig: FlowGuardConfig = {
+  const resolvedConfig: LimiterxConfig = {
     ...config,
     keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
     onLimit: undefined,
@@ -112,7 +112,7 @@ export function rateLimitNext(config: FlowGuardConfig): NextRateLimiter {
           }
         }
         if (debug) {
-          console.log(`[flowguard:next] DENY key="${result.key}" status=${statusCode}`);
+          console.log(`[limiterx:next] DENY key="${result.key}" status=${statusCode}`);
         }
         res.status(statusCode);
         if (typeof message === 'string') {
@@ -121,7 +121,7 @@ export function rateLimitNext(config: FlowGuardConfig): NextRateLimiter {
           res.json(message);
         }
       } else if (debug) {
-        console.log(`[flowguard:next] ALLOW key="${result.key}" remaining=${result.remaining}`);
+        console.log(`[limiterx:next] ALLOW key="${result.key}" remaining=${result.remaining}`);
       }
 
       return result;
@@ -140,20 +140,20 @@ export function rateLimitNext(config: FlowGuardConfig): NextRateLimiter {
  *
  * @example
  * ```typescript
- * import { rateLimitEdge } from 'flowguard/next';
+ * import { rateLimitEdge } from 'limiterx/next';
  *
  * export const middleware = rateLimitEdge({ max: 10, window: '30s' });
  * export const config = { matcher: ['/api/:path*'] };
  * ```
  */
-export function rateLimitEdge(config: FlowGuardConfig) {
+export function rateLimitEdge(config: LimiterxConfig) {
   const defaultKeyGenerator = (ctx: RequestContext) => {
     const request = ctx.request as NextRequest;
     const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
     return request.ip || forwarded || 'unknown';
   };
 
-  const resolvedConfig: FlowGuardConfig = {
+  const resolvedConfig: LimiterxConfig = {
     ...config,
     keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
     onLimit: undefined,
@@ -191,7 +191,7 @@ export function rateLimitEdge(config: FlowGuardConfig) {
       }
 
       if (debug) {
-        console.log(`[flowguard:edge] DENY key="${result.key}" status=${statusCode}`);
+        console.log(`[limiterx:edge] DENY key="${result.key}" status=${statusCode}`);
       }
 
       const body = typeof message === 'string' ? message : JSON.stringify(message);
@@ -216,7 +216,7 @@ export function rateLimitEdge(config: FlowGuardConfig) {
     }
 
     if (debug) {
-      console.log(`[flowguard:edge] ALLOW key="${result.key}" remaining=${result.remaining}`);
+      console.log(`[limiterx:edge] ALLOW key="${result.key}" remaining=${result.remaining}`);
     }
 
     return undefined;

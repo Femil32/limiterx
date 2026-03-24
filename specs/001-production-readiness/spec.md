@@ -1,4 +1,4 @@
-# Feature Specification: Flowguard Production Readiness
+# Feature Specification: Limiterx Production Readiness
 
 **Feature Branch**: `001-production-readiness`  
 **Created**: 2026-03-23  
@@ -21,7 +21,7 @@
 - **Fixed window (FR-002)**: All boundaries use `Date.now()` (UTC epoch milliseconds). Current window start is `Math.floor(now / windowMs) * windowMs`; no local timezone interpretation.
 - **Rate limit headers (FR-009)**: `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` values are **integer decimal strings**. `RateLimit-Reset` is **seconds until the next window reset** (not an HTTP-date). `Retry-After` on denied responses is **integer seconds**. Normative detail: `contracts/backend-adapters.md`. v1.0 MUST NOT emit `X-RateLimit-*`.
 - **Header safety (FR-017)**: Header values are derived from safe coercions (e.g. integers); user-controlled strings MUST NOT be written raw into header values.
-- **Namespaces (FR-016)**: Internal persistence keys use the `flowguard:{userKey}` prefix so user key strings cannot collide with unrelated store entries.
+- **Namespaces (FR-016)**: Internal persistence keys use the `limiterx:{userKey}` prefix so user key strings cannot collide with unrelated store entries.
 - **Skip (FR-014)**: When `skip` returns true, the request does not increment count and `onLimit` does not fire for that request. Backend adapters still emit rate limit headers when `headers !== false` (reflecting quota without consuming for that call).
 - **Debug (FR-018)**: Diagnostic output may include resolved keys and network-derived identifiers; v1.0 does **not** mandate PII redaction. README MUST warn to enable `debug` only in trusted environments.
 - **Memory pressure (FR-007)**: LRU eviction bounds memory; per-key correctness holds for keys still resident after eviction.
@@ -37,7 +37,7 @@
 
 ### User Story 1 - Core Rate Limiting with Fixed Window (Priority: P1)
 
-A developer installs flowguard and creates a rate limiter using the unified configuration shape. They specify the maximum number of requests and a human-readable time window (e.g., "15m", "30s"), and the limiter accurately tracks and enforces those thresholds using the fixed window algorithm. When a request is allowed, the developer receives a result containing remaining quota, reset timing, and the resolved key. When the limit is exceeded, the developer receives a denial result and an optional callback fires.
+A developer installs limiterx and creates a rate limiter using the unified configuration shape. They specify the maximum number of requests and a human-readable time window (e.g., "15m", "30s"), and the limiter accurately tracks and enforces those thresholds using the fixed window algorithm. When a request is allowed, the developer receives a result containing remaining quota, reset timing, and the resolved key. When the limit is exceeded, the developer receives a denial result and an optional callback fires.
 
 **Why this priority**: The core algorithm engine is the foundation that every adapter and integration depends on. Without a correct, tested fixed window implementation and a unified config shape, nothing else in the library functions.
 
@@ -55,7 +55,7 @@ A developer installs flowguard and creates a rate limiter using the unified conf
 
 ### User Story 2 - Backend Framework Middleware (Priority: P2)
 
-A backend developer protects their API endpoints by applying flowguard as middleware in their chosen framework (Express, raw Node.js HTTP, Next.js API routes, Next.js Edge Middleware, or Koa). The middleware automatically identifies the requester (by IP or custom key), enforces the rate limit, responds with standard HTTP rate limit headers on every request, and returns a 429 status with a configurable message when the limit is exceeded — all using the same unified config shape.
+A backend developer protects their API endpoints by applying limiterx as middleware in their chosen framework (Express, raw Node.js HTTP, Next.js API routes, Next.js Edge Middleware, or Koa). The middleware automatically identifies the requester (by IP or custom key), enforces the rate limit, responds with standard HTTP rate limit headers on every request, and returns a 429 status with a configurable message when the limit is exceeded — all using the same unified config shape.
 
 **Why this priority**: Backend API protection is the primary real-world use case for rate limiting. Framework adapters turn the core engine into immediately deployable middleware, delivering value to the largest segment of the target audience.
 
@@ -63,10 +63,10 @@ A backend developer protects their API endpoints by applying flowguard as middle
 
 **Acceptance Scenarios**:
 
-1. **Given** an Express app with flowguard middleware configured with max=10 and window="1m", **When** an HTTP request is made, **Then** the response includes `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` headers with correct values.
-2. **Given** an Express app with flowguard middleware that has exhausted its quota for a given IP, **When** the next request arrives from that IP, **Then** the server responds with HTTP 429, a `Retry-After` header (in seconds), and the configured error message body.
-3. **Given** a Next.js API route protected by flowguard, **When** requests arrive within the limit, **Then** the route handler executes normally and rate limit headers are present.
-4. **Given** a Next.js Edge Middleware powered by flowguard, **When** a request exceeds the limit, **Then** the middleware returns a 429 response before the request reaches the origin.
+1. **Given** an Express app with limiterx middleware configured with max=10 and window="1m", **When** an HTTP request is made, **Then** the response includes `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` headers with correct values.
+2. **Given** an Express app with limiterx middleware that has exhausted its quota for a given IP, **When** the next request arrives from that IP, **Then** the server responds with HTTP 429, a `Retry-After` header (in seconds), and the configured error message body.
+3. **Given** a Next.js API route protected by limiterx, **When** requests arrive within the limit, **Then** the route handler executes normally and rate limit headers are present.
+4. **Given** a Next.js Edge Middleware powered by limiterx, **When** a request exceeds the limit, **Then** the middleware returns a 429 response before the request reaches the origin.
 5. **Given** any backend adapter with a custom `keyGenerator`, **When** requests arrive, **Then** the limiter identifies requesters by the custom key (e.g., user ID, API key) rather than IP address.
 6. **Given** any backend adapter response, **When** rate limit headers are present, **Then** the response includes only `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` (and `Retry-After` when denied) — not legacy `X-RateLimit-*` headers.
 7. **Given** a backend adapter whose `keyGenerator` throws during a request, **When** the middleware runs, **Then** the error propagates to a **5xx** response or the framework’s error handler, and the response is **not** a 429 from rate limiting.
@@ -75,7 +75,7 @@ A backend developer protects their API endpoints by applying flowguard as middle
 
 ### User Story 3 - Frontend Client-Side Rate Limiting (Priority: P3)
 
-A frontend developer limits the rate of user-triggered actions (form submissions, button clicks, API calls) using flowguard's React hook, fetch wrapper, or Axios interceptor. The developer sees real-time state — whether the action is allowed, how many attempts remain, and when the window resets — enabling them to build responsive UI feedback without backend round-trips.
+A frontend developer limits the rate of user-triggered actions (form submissions, button clicks, API calls) using limiterx's React hook, fetch wrapper, or Axios interceptor. The developer sees real-time state — whether the action is allowed, how many attempts remain, and when the window resets — enabling them to build responsive UI feedback without backend round-trips.
 
 **Why this priority**: Frontend rate limiting is a key differentiator from all competing libraries. It enables a new category of use cases (client-side protection, UX-driven throttling) and fulfills the "universal" promise of the library.
 
@@ -94,7 +94,7 @@ A frontend developer limits the rate of user-triggered actions (form submissions
 
 ### User Story 4 - Developer Ergonomics & Configuration Safety (Priority: P4)
 
-A developer gets immediate, actionable feedback when they misconfigure flowguard. Configuration validation happens at setup time (not at request time), error messages name the offending field and show expected vs. actual values, and TypeScript autocompletion guides them through every option. The library is tree-shakeable so only imported adapters are included in the bundle.
+A developer gets immediate, actionable feedback when they misconfigure limiterx. Configuration validation happens at setup time (not at request time), error messages name the offending field and show expected vs. actual values, and TypeScript autocompletion guides them through every option. The library is tree-shakeable so only imported adapters are included in the bundle.
 
 **Why this priority**: Developer experience directly impacts adoption and retention. Clear error messages reduce support burden, and tree-shaking keeps bundles small — both essential for a production-quality library.
 
@@ -104,7 +104,7 @@ A developer gets immediate, actionable feedback when they misconfigure flowguard
 
 1. **Given** a developer passes `max: -5` to `createRateLimiter`, **When** the limiter is created, **Then** a descriptive error is thrown immediately naming the `max` field and stating it must be a positive integer.
 2. **Given** a developer passes `window: '2x'` (invalid duration), **When** the limiter is created, **Then** a descriptive error is thrown naming the `window` field and stating the string is not a valid duration format.
-3. **Given** a developer imports only `flowguard/express`, **When** the application is bundled, **Then** no React hook code, Koa middleware, or other adapter code is included in the output.
+3. **Given** a developer imports only `limiterx/express`, **When** the application is bundled, **Then** no React hook code, Koa middleware, or other adapter code is included in the output.
 4. **Given** a developer uses an IDE with TypeScript support, **When** they type a config object for `createRateLimiter`, **Then** all available options are suggested with correct types and JSDoc descriptions.
 5. **Given** a limiter created with `debug: true`, **When** rate limit checks run, **Then** diagnostic lines are written to the console (e.g. key, allow/deny, remaining quota) and no debug output occurs when `debug` is `false` or omitted.
 
@@ -112,7 +112,7 @@ A developer gets immediate, actionable feedback when they misconfigure flowguard
 
 ### User Story 5 - Production Publishing & CI Quality Gate (Priority: P5)
 
-The library is published to npm under the `flowguard` package name with dual ESM/CJS module format, a comprehensive README, changelog, and a GitHub Actions CI pipeline that gates every release on linting, testing, type checking, and coverage thresholds. The published package works identically when installed via `npm i flowguard` in Node.js 18+, Bun, and browser bundlers.
+The library is published to npm under the `limiterx` package name with dual ESM/CJS module format, a comprehensive README, changelog, and a GitHub Actions CI pipeline that gates every release on linting, testing, type checking, and coverage thresholds. The published package works identically when installed via `npm i limiterx` in Node.js 18+, Bun, and browser bundlers.
 
 **Why this priority**: Publishing and CI are the final gate before the library reaches users. Without reliable packaging and automated quality checks, all prior work cannot be delivered or maintained.
 
@@ -122,7 +122,7 @@ The library is published to npm under the `flowguard` package name with dual ESM
 
 1. **Given** a push to the main branch, **When** the CI pipeline runs, **Then** it executes linting, type checking, all tests, and fails the build if any step fails or coverage drops below the threshold.
 2. **Given** a git tag matching `v`* is pushed, **When** CI completes successfully, **Then** the package is published to npm automatically.
-3. **Given** a user runs `npm i flowguard` in a new project, **When** they import from `flowguard`, `flowguard/express`, or `flowguard/react`, **Then** each import resolves correctly in both ESM and CJS environments.
+3. **Given** a user runs `npm i limiterx` in a new project, **When** they import from `limiterx`, `limiterx/express`, or `limiterx/react`, **Then** each import resolves correctly in both ESM and CJS environments.
 
 ---
 
@@ -167,7 +167,7 @@ The library is published to npm under the `flowguard` package name with dual ESM
 
 ### Key Entities
 
-- **FlowGuardConfig**: The unified configuration object specifying rate limit rules — includes max requests, window duration, algorithm selection, key generation strategy, behavioral callbacks, optional `maxKeys` for MemoryStore LRU capacity (default **10,000**), and optional `debug` for opt-in console diagnostics.
+- **LimiterxConfig**: The unified configuration object specifying rate limit rules — includes max requests, window duration, algorithm selection, key generation strategy, behavioral callbacks, optional `maxKeys` for MemoryStore LRU capacity (default **10,000**), and optional `debug` for opt-in console diagnostics.
 - **RateLimiterResult**: The outcome of a rate limit check — communicates whether the request is allowed, how much quota remains, and when the window resets.
 - **StorageAdapter**: Internal implementation abstraction for persisting rate limit state (not exported in v1.0); consumers cannot supply custom implementations until a future release introduces additional built-in stores (e.g. Redis in v1.1).
 - **MemoryStore**: The only supported storage implementation in v1.0 — holds state in-process with automatic expiration cleanup and LRU eviction for memory safety; default LRU capacity **10,000** distinct keys unless configured.
@@ -178,13 +178,13 @@ The library is published to npm under the `flowguard` package name with dual ESM
 - **NFR-CQ**: All source code MUST pass linting and TypeScript strict mode (`"strict": true`) with zero implicit `any` types. Every exported function and interface MUST have JSDoc documentation with `@example` blocks.
 - **NFR-TS**: Unit tests MUST cover all core algorithm logic, config validation, window parsing, and storage operations. Integration tests MUST cover each backend adapter end-to-end, including a `keyGenerator` that throws (expect **5xx** or framework error delegation, not **429**). React hook MUST have rendering tests. Overall statement coverage MUST be ≥ 90%, branch coverage ≥ 85%, function coverage ≥ 95%. Coverage metrics MUST exclude generated artifacts and declaration-only files as described in Session 2026-03-23 (b).
 - **NFR-UX**: All adapters MUST share the same configuration shape. Error messages, callback signatures, and result types MUST be consistent across all adapters. Documentation MUST cover each adapter with runnable examples.
-- **NFR-PF**: Core rate limit check latency MUST be under 1ms for in-memory storage. Bundle size limits apply to named entry points: the **`flowguard`** core entry MUST be ≤ 5KB minified+gzipped; **`flowguard/react`** MUST be ≤ 3KB minified+gzipped (peer `react` externalized). The library MUST declare `"sideEffects": false` and support tree-shaking so unused adapters are excluded from bundles.
+- **NFR-PF**: Core rate limit check latency MUST be under 1ms for in-memory storage. Bundle size limits apply to named entry points: the **`limiterx`** core entry MUST be ≤ 5KB minified+gzipped; **`limiterx/react`** MUST be ≤ 3KB minified+gzipped (peer `react` externalized). The library MUST declare `"sideEffects": false` and support tree-shaking so unused adapters are excluded from bundles.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: A developer with no prior flowguard experience can install the package and have a working rate-limited endpoint in under 5 minutes using the README quick-start guide — **assuming** Node.js 18+, network access to the npm registry, and no extraordinary proxy or offline constraints beyond a typical developer workstation.
+- **SC-001**: A developer with no prior limiterx experience can install the package and have a working rate-limited endpoint in under 5 minutes using the README quick-start guide — **assuming** Node.js 18+, network access to the npm registry, and no extraordinary proxy or offline constraints beyond a typical developer workstation.
 - **SC-002**: The rate limiter accurately enforces configured thresholds — zero false allows (requests above the limit that are permitted) and zero false denies (requests within the limit that are blocked) under normal single-process operation.
 - **SC-003**: The library operates correctly in target environments — **Node.js** 18/20/22 (CI matrix), **browser** (Vitest jsdom or equivalent for client-facing adapters), **Bun** (CI job running the test suite under Bun), and **edge/serverless** (Next.js Edge middleware integration tests and portable core APIs without Node-only globals) — with automated verification for each in the release pipeline.
 - **SC-004**: All automated quality checks (lint, type check, tests, coverage thresholds) pass on every commit to the main branch with zero manual intervention.
@@ -199,7 +199,7 @@ The library is published to npm under the `flowguard` package name with dual ESM
 - Redis-backed distributed storage is out of scope for v1.0; the in-memory store is the only storage implementation. `StorageAdapter` is an internal abstraction only — custom user-defined storage backends are not supported in v1.0.
 - The library targets single-process deployments for v1.0; multi-instance coordination requires Redis (v1.1).
 - `Date.now()` is the time source for all timestamp operations, ensuring edge runtime compatibility.
-- Express `trust proxy` is the responsibility of the application developer to configure; flowguard documents this requirement but does not enforce it.
+- Express `trust proxy` is the responsibility of the application developer to configure; limiterx documents this requirement but does not enforce it.
 - Backend adapters use the `RateLimit-*` header names only (aligned with the IETF RateLimit header work); legacy `X-RateLimit-*` headers are not emitted in v1.0.
 - The library ships as dual ESM/CJS using the `exports` field in `package.json`.
 - Vitest is the test runner; supertest is used for HTTP integration tests; @testing-library/react is used for React hook tests.
