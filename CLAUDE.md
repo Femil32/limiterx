@@ -104,7 +104,7 @@ Feature specifications live in `specs/`:
 | Spec | Branch | Status | Description |
 |---|---|---|---|
 | `001-production-readiness` | `main` | ✅ Shipped (v1.0.0) | Core + all adapters |
-| `002-algo-storage-size` | `002-algo-storage-size` | 🚧 In progress | Sliding window, token bucket, Redis, size |
-| `003-express-rate-limit-parity` | Current | 🚧 Phase A done | 7 gaps closed (v1.2.0 target) |
+| `002-algo-storage-size` | `002-algo-storage-size` | ✅ Complete | Sliding window, token bucket, Redis, size |
+| `003-express-rate-limit-parity` | `002-algo-storage-size` | ✅ Complete (Phase A + B) | 12 gaps closed — dynamic max, skipSuccessful, IETF drafts, runtime validation |
 
 Each spec contains: `spec.md` (user stories), `plan.md` (design), `tasks.md`, `quickstart.md`, `data-model.md`, `contracts/`, `checklists/`.

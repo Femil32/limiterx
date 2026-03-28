@@ -24,16 +24,16 @@
 
 ## P3 — Advanced Features
 
-- [ ] **GAP-1**: Dynamic `limit` — `max` as `number | (ctx) => number | Promise<number>`
-- [ ] **GAP-2a**: `skipSuccessfulRequests` — decrement counter if response status < 400
-- [ ] **GAP-2b**: `skipFailedRequests` — decrement counter if response status >= 400
-- [ ] **GAP-2c**: `requestWasSuccessful` — custom success predicate for skip options
-- [ ] **GAP-5**: `standardHeaders` draft selector (`'draft-6' | 'draft-7' | 'draft-8'`)
-- [ ] **GAP-6**: `identifier` config + `RateLimit-Policy` header (draft-8)
+- [x] **GAP-1**: Dynamic `limit` — `max` as `number | (ctx) => number | Promise<number>`
+- [x] **GAP-2a**: `skipSuccessfulRequests` — decrement counter if response status < 400
+- [x] **GAP-2b**: `skipFailedRequests` — decrement counter if response status >= 400
+- [x] **GAP-2c**: `requestWasSuccessful` — custom success predicate for skip options
+- [x] **GAP-5**: `standardHeaders` draft selector (`'draft-6' | 'draft-7' | 'draft-8'`)
+- [x] **GAP-6**: `identifier` config + `RateLimit-Policy` header (draft-8)
 
 ## P4 — Operational
 
-- [ ] **GAP-10**: `validate` named checks — runtime config warnings with per-check toggle
+- [x] **GAP-10**: `validate` named checks — runtime config warnings with per-check toggle
 
 ---
 

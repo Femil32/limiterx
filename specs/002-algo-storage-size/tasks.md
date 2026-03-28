@@ -184,7 +184,7 @@
 
 - [x] T023 [M2] Update `README.md`: document `algorithm: 'sliding-window' | 'token-bucket'` options with brief examples; document `store?: StorageAdapter` config field; add `limiterx/redis` import usage example with `RedisStore`; update algorithm comparison table if one exists
 
-- [ ] T024 Run quickstart.md validation scenarios manually (US1–US4 smoke tests)
+- [x] T024 Run quickstart.md validation scenarios manually (US1–US4 smoke tests)
 
 ---
 
