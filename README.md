@@ -4,11 +4,12 @@ Universal production-ready rate limiting for JavaScript/TypeScript. Works in Nod
 
 ## Features
 
-- Fixed window algorithm with wall-clock-aligned boundaries
+- Three algorithms: fixed window, sliding window, and token bucket
 - Zero runtime dependencies in core
 - Backend adapters: Express, Node HTTP, Next.js (API + Edge), Koa
 - Frontend adapters: React hook, fetch wrapper, Axios interceptor
 - In-memory store with LRU eviction (default **10,000** keys)
+- Optional Redis store (`limiterx/redis`) for multi-process deployments
 - Standard `RateLimit-*` headers (RFC draft compliant)
 - Tree-shakeable subpath exports (`sideEffects: false`)
 - Dual ESM/CJS output
@@ -137,14 +138,76 @@ All adapters share the same configuration shape:
 |--------|------|---------|-------------|
 | `max` | `number` | *required* | Max requests per window |
 | `window` | `number \| string` | *required* | Duration: `'30s'`, `'5m'`, `'1h'`, `'1d'`, or milliseconds |
+| `algorithm` | `'fixed-window' \| 'sliding-window' \| 'token-bucket'` | `'fixed-window'` | Rate limiting algorithm |
+| `store` | `StorageAdapter` | `new MemoryStore()` | Custom storage backend |
 | `keyGenerator` | `function` | IP (backend) / `'global'` (frontend) | Custom key resolver |
 | `onLimit` | `function` | - | Callback when limit exceeded |
 | `maxKeys` | `number` | `10000` | Max distinct keys in memory (LRU eviction) |
 | `debug` | `boolean` | `false` | Console diagnostics |
 | `skip` | `function` | - | Bypass rate limiting for certain requests |
-| `message` | `string \| object` | `'Too many requests'` | Response body on 429 (backend) |
+| `message` | `string \| object \| function` | `'Too many requests'` | Response body on 429 (backend) |
 | `statusCode` | `number` | `429` | HTTP status on deny (backend) |
 | `headers` | `boolean` | `true` | Send rate limit headers (backend) |
+| `legacyHeaders` | `boolean` | `false` | Also emit `X-RateLimit-*` headers |
+| `passOnStoreError` | `boolean` | `false` | Allow requests through on storage errors (fail-open) |
+
+### Algorithms
+
+Use the `algorithm` option to select a rate limiting strategy:
+
+```typescript
+// Fixed window (default) — simple counter, resets on aligned wall-clock boundaries
+app.use(rateLimitExpress({ max: 100, window: '15m', algorithm: 'fixed-window' }));
+
+// Sliding window — weighted blend of previous and current window counts
+// Eliminates burst-at-boundary spikes; higher memory usage (2 keys per tracked identity)
+app.use(rateLimitExpress({ max: 100, window: '15m', algorithm: 'sliding-window' }));
+
+// Token bucket — bucket starts full and refills at max/window rate
+// Best for APIs with bursty-but-bounded traffic patterns
+app.use(rateLimitExpress({ max: 100, window: '15m', algorithm: 'token-bucket' }));
+```
+
+| Algorithm | Burst allowance | Memory per key | Boundary spikes |
+|-----------|----------------|----------------|-----------------|
+| `fixed-window` | Full burst at window start | 1 key | Yes |
+| `sliding-window` | Weighted blend | 2 keys | No |
+| `token-bucket` | Burst up to `max`, then steady | 1 key | No |
+
+### Custom Store
+
+By default limiterx uses an in-memory LRU store. For multi-process or multi-server deployments, use Redis:
+
+```typescript
+import Redis from 'ioredis';
+import { rateLimitExpress } from 'limiterx/express';
+import { RedisStore } from 'limiterx/redis';
+
+const client = new Redis({ host: 'localhost', port: 6379 });
+const store = new RedisStore(client);
+
+app.use(rateLimitExpress({
+  max: 100,
+  window: '15m',
+  store,
+}));
+```
+
+`RedisStore` is compatible with both **ioredis** and **node-redis** (v4+). It uses a Lua script for atomic `INCR + EXPIRE` operations, ensuring correctness under concurrent load.
+
+You can also provide any custom storage backend by implementing the `StorageAdapter` interface:
+
+```typescript
+import type { StorageAdapter } from 'limiterx';
+
+class MyStore implements StorageAdapter {
+  async get(key: string) { /* ... */ }
+  async set(key: string, state: Record<string, number>, ttlMs: number) { /* ... */ }
+  async increment(key: string, ttlMs: number): Promise<number> { /* ... */ }
+  async delete(key: string) { /* ... */ }
+  async clear() { /* ... */ }
+}
+```
 
 ### Window Strings
 

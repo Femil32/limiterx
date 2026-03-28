@@ -52,7 +52,7 @@ describe('validateConfig', () => {
     })
   })
 
-  describe('V-004: algorithm must be fixed-window or undefined', () => {
+  describe('V-004: algorithm must be a valid value or undefined', () => {
     it('accepts undefined algorithm', () => {
       expect(() => validateConfig({ ...baseConfig })).not.toThrow()
     })
@@ -61,8 +61,16 @@ describe('validateConfig', () => {
       expect(() => validateConfig({ ...baseConfig, algorithm: 'fixed-window' })).not.toThrow()
     })
 
+    it("accepts 'sliding-window' algorithm", () => {
+      expect(() => validateConfig({ ...baseConfig, algorithm: 'sliding-window' })).not.toThrow()
+    })
+
+    it("accepts 'token-bucket' algorithm", () => {
+      expect(() => validateConfig({ ...baseConfig, algorithm: 'token-bucket' })).not.toThrow()
+    })
+
     it('throws for unknown algorithm', () => {
-      expect(() => validateConfig({ ...baseConfig, algorithm: 'sliding-window' as 'fixed-window' })).toThrow('[limiterx]')
+      expect(() => validateConfig({ ...baseConfig, algorithm: 'leaky-bucket' as 'fixed-window' })).toThrow('[limiterx]')
     })
   })
 

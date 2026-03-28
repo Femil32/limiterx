@@ -87,6 +87,16 @@
         "types": "./dist/adapters/axios.d.cts",
         "default": "./dist/adapters/axios.cjs"
       }
+    },
+    "./redis": {
+      "import": {
+        "types": "./dist/adapters/redis.d.ts",
+        "default": "./dist/adapters/redis.js"
+      },
+      "require": {
+        "types": "./dist/adapters/redis.d.cts",
+        "default": "./dist/adapters/redis.cjs"
+      }
     }
   },
   "files": [
@@ -125,9 +135,11 @@
   "peerDependencies": {
     "axios": ">=1.0.0",
     "express": ">=4.0.0",
+    "ioredis": ">=5.0.0",
     "koa": ">=2.0.0",
     "next": ">=13.0.0",
-    "react": ">=18.0.0"
+    "react": ">=18.0.0",
+    "redis": ">=4.0.0"
   },
   "peerDependenciesMeta": {
     "react": {
@@ -143,6 +155,12 @@
       "optional": true
     },
     "axios": {
+      "optional": true
+    },
+    "redis": {
+      "optional": true
+    },
+    "ioredis": {
       "optional": true
     }
   },

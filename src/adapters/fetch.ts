@@ -38,6 +38,7 @@ export function rateLimitFetch(
   const skipFn = config.skip;
   const onLimit = config.onLimit;
   const debug = config.debug ?? false;
+  const passOnStoreError = config.passOnStoreError ?? false;
 
   const limiter = createRateLimiter({
     ...config,
@@ -52,19 +53,27 @@ export function rateLimitFetch(
     const ctx: RequestContext = { key: '', input, init };
 
     // FR-019: keyGenerator errors propagate
-    const key = resolvedKeyGenerator(ctx);
+    const key = await resolvedKeyGenerator(ctx);
     ctx.key = key;
 
-    if (skipFn && skipFn(ctx)) {
+    if (skipFn && (await skipFn(ctx))) {
       return fetchFn(input, init);
     }
 
-    const result = await limiter.check(key);
+    let result;
+    try {
+      result = await limiter.check(key);
+    } catch (storeErr) {
+      if (passOnStoreError) {
+        return fetchFn(input, init);
+      }
+      throw storeErr;
+    }
 
     if (!result.allowed) {
       if (onLimit) {
         try {
-          onLimit(result, ctx);
+          await onLimit(result, ctx);
         } catch {
           // swallow
         }

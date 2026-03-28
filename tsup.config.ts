@@ -1,5 +1,7 @@
 import { defineConfig } from 'tsup';
 
+// Unpacked size: ~147 kB (measured 2026-03-28). Target: < 300 kB (spec-002 US4).
+
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
@@ -10,11 +12,12 @@ export default defineConfig({
     'adapters/react': 'src/adapters/react.ts',
     'adapters/fetch': 'src/adapters/fetch.ts',
     'adapters/axios': 'src/adapters/axios.ts',
+    'adapters/redis': 'src/adapters/redis.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,
-  splitting: false,
+  splitting: true,
   clean: true,
-  external: ['react', 'express', 'koa', 'next', 'axios'],
-  sourcemap: true,
+  external: ['react', 'express', 'koa', 'next', 'axios', 'ioredis', 'redis'],
+  sourcemap: false,
 });

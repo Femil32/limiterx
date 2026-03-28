@@ -1,14 +1,14 @@
 <!--
 Sync Impact Report
-Version change: initial template → 1.0.0
-Modified principles: N/A (first adoption; placeholders replaced)
-Added sections: Core Principles I–IV, Technology Alignment, Development Workflow & Quality Gates, Governance
-Removed sections: Template placeholder commentary (HTML examples) — superseded by concrete text
+Version change: 1.0.0 → 1.0.1
+Modified principles: none
+Added sections: none
+Removed sections: none
 Templates requiring updates:
-  - .specify/templates/plan-template.md ✅ updated (Constitution Check gates)
-  - .specify/templates/spec-template.md ✅ updated (NFR subsection)
-  - .specify/templates/tasks-template.md ✅ updated (testing/constitution alignment)
-  - .specify/templates/commands/*.md — N/A (directory not present)
+  - .specify/templates/plan-template.md ✅ verified (Constitution Check matches Principles I–IV)
+  - .specify/templates/spec-template.md ✅ verified (NFR subsection aligns with constitution)
+  - .specify/templates/tasks-template.md ✅ verified (tests / polish reference constitution)
+  - .cursor/commands/speckit.constitution.md ✅ updated (command discovery path: .cursor/commands/*.md)
 Follow-up TODOs: none
 -->
 
@@ -69,4 +69,4 @@ Follow-up TODOs: none
 - **Compliance:** Plan authors and reviewers MUST verify Constitution Check items; at least a lightweight review against Core Principles SHOULD occur before release tagging.
 - **Runtime guidance:** Day-to-day coding conventions in repository docs (e.g. PRD, contributing guide when present) MUST not contradict this constitution; if they conflict, this document wins until amended.
 
-**Version**: 1.0.0 | **Ratified**: 2026-03-23 | **Last Amended**: 2026-03-23
+**Version**: 1.0.1 | **Ratified**: 2026-03-23 | **Last Amended**: 2026-03-27

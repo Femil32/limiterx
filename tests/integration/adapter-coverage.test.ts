@@ -817,3 +817,177 @@ describe('FixedWindowLimiter — debug mode', () => {
     consoleSpy.mockRestore();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Koa adapter — Phase B coverage (handler, skipSuccessfulRequests)
+// ---------------------------------------------------------------------------
+
+describe('rateLimitKoa — Phase B coverage', () => {
+  it('custom handler called on deny (instead of built-in 429)', async () => {
+    let handlerCalled = false;
+    const middleware = rateLimitKoa({
+      max: 1,
+      window: '1m',
+      keyGenerator: () => 'koa-handler-key',
+      handler: async () => {
+        handlerCalled = true;
+      },
+    });
+
+    const next = vi.fn().mockResolvedValue(undefined);
+    const ctx1 = createMockKoaCtx();
+    const ctx2 = createMockKoaCtx();
+
+    await middleware(ctx1 as unknown as Parameters<typeof middleware>[0], next);
+    await middleware(ctx2 as unknown as Parameters<typeof middleware>[0], next);
+
+    expect(handlerCalled).toBe(true);
+    // Status stays 200 because custom handler manages the response
+    expect(ctx2.status).toBe(200);
+  });
+
+  it('handler that throws does not propagate error', async () => {
+    const middleware = rateLimitKoa({
+      max: 1,
+      window: '1m',
+      keyGenerator: () => 'koa-handler-throw-key',
+      handler: async () => {
+        throw new Error('handler explosion');
+      },
+    });
+
+    const next = vi.fn().mockResolvedValue(undefined);
+    await middleware(createMockKoaCtx() as unknown as Parameters<typeof middleware>[0], next);
+    // Should not throw
+    await expect(
+      middleware(createMockKoaCtx() as unknown as Parameters<typeof middleware>[0], next),
+    ).resolves.toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Edge adapter — Phase B: standardHeaders coverage
+// ---------------------------------------------------------------------------
+
+describe('rateLimitEdge — standardHeaders coverage', () => {
+  it('draft-6: emits combined RateLimit header on deny', async () => {
+    const middleware = rateLimitEdge({
+      max: 1,
+      window: '1m',
+      standardHeaders: 'draft-6',
+      keyGenerator: () => 'edge-draft6-key',
+    });
+    const req = createMockEdgeRequest('1.2.3.4');
+
+    await middleware(req as unknown as Request);
+    const result = await middleware(req as unknown as Request);
+
+    expect(result).toBeInstanceOf(Response);
+    expect(result?.headers.get('ratelimit')).toMatch(/limit=\d+/);
+    expect(result?.headers.get('ratelimit-limit')).toBeNull();
+  });
+
+  it('draft-8: emits RateLimit-Policy on deny', async () => {
+    const middleware = rateLimitEdge({
+      max: 5,
+      window: 60000,
+      standardHeaders: 'draft-8',
+      keyGenerator: () => 'edge-draft8-key',
+    });
+    const req = createMockEdgeRequest('1.2.3.4');
+
+    for (let i = 0; i < 5; i++) await middleware(req as unknown as Request);
+    const result = await middleware(req as unknown as Request);
+
+    expect(result).toBeInstanceOf(Response);
+    expect(result?.headers.get('ratelimit-policy')).toBeDefined();
+    expect(result?.headers.get('ratelimit-policy')).toMatch(/5;w=60/);
+  });
+
+  it('draft-8 with identifier: policy includes identifier', async () => {
+    const middleware = rateLimitEdge({
+      max: 5,
+      window: 60000,
+      standardHeaders: 'draft-8',
+      identifier: 'my-api',
+      keyGenerator: () => 'edge-draft8-id-key',
+    });
+    const req = createMockEdgeRequest('1.2.3.4');
+
+    for (let i = 0; i < 5; i++) await middleware(req as unknown as Request);
+    const result = await middleware(req as unknown as Request);
+
+    expect(result?.headers.get('ratelimit-policy')).toMatch(/my-api/);
+  });
+
+  it('legacyHeaders: emits X-RateLimit-* on deny', async () => {
+    const middleware = rateLimitEdge({
+      max: 1,
+      window: '1m',
+      legacyHeaders: true,
+      keyGenerator: () => 'edge-legacy-headers-key',
+    });
+    const req = createMockEdgeRequest('1.2.3.4');
+
+    await middleware(req as unknown as Request);
+    const result = await middleware(req as unknown as Request);
+
+    expect(result?.headers.get('x-ratelimit-limit')).toBeDefined();
+    expect(result?.headers.get('x-ratelimit-remaining')).toBeDefined();
+    expect(result?.headers.get('x-ratelimit-reset')).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// rateLimitNext — Phase B: standardHeaders and finish hook coverage
+// ---------------------------------------------------------------------------
+
+describe('rateLimitNext — Phase B coverage', () => {
+  it('custom handler called on deny', async () => {
+    let handlerCalled = false;
+    const limiter = rateLimitNext({
+      max: 1,
+      window: '1m',
+      keyGenerator: () => 'next-handler-key',
+      handler: async () => {
+        handlerCalled = true;
+      },
+    });
+    const { req, res } = createMockNextReqRes();
+
+    await limiter.check(req, res);
+    await limiter.check(req, res);
+
+    expect(handlerCalled).toBe(true);
+  });
+
+  it('draft-6 standardHeaders: combined RateLimit header set', async () => {
+    const limiter = rateLimitNext({
+      max: 5,
+      window: '1m',
+      standardHeaders: 'draft-6',
+      keyGenerator: () => 'next-draft6-key',
+    });
+    const { req, res } = createMockNextReqRes();
+
+    await limiter.check(req, res);
+
+    expect(res._headers['RateLimit']).toMatch(/limit=\d+/);
+    expect(res._headers['RateLimit-Limit']).toBeUndefined();
+  });
+
+  it('draft-8 standardHeaders: RateLimit-Policy header set', async () => {
+    const limiter = rateLimitNext({
+      max: 5,
+      window: 60000,
+      standardHeaders: 'draft-8',
+      keyGenerator: () => 'next-draft8-key',
+    });
+    const { req, res } = createMockNextReqRes();
+
+    await limiter.check(req, res);
+
+    expect(res._headers['RateLimit-Policy']).toBeDefined();
+    expect(res._headers['RateLimit-Policy']).toMatch(/5;w=60/);
+  });
+});

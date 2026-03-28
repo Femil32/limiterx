@@ -58,6 +58,7 @@ export function rateLimitAxios(
   const skipFn = config.skip;
   const onLimit = config.onLimit;
   const debug = config.debug ?? false;
+  const passOnStoreError = config.passOnStoreError ?? false;
 
   const limiter = createRateLimiter({
     ...config,
@@ -70,19 +71,27 @@ export function rateLimitAxios(
       const ctx: RequestContext = { key: '', config: axiosConfig };
 
       // FR-019: keyGenerator errors propagate
-      const key = resolvedKeyGenerator(ctx);
+      const key = await resolvedKeyGenerator(ctx);
       ctx.key = key;
 
-      if (skipFn && skipFn(ctx)) {
+      if (skipFn && (await skipFn(ctx))) {
         return axiosConfig;
       }
 
-      const result = await limiter.check(key);
+      let result;
+      try {
+        result = await limiter.check(key);
+      } catch (storeErr) {
+        if (passOnStoreError) {
+          return axiosConfig;
+        }
+        throw storeErr;
+      }
 
       if (!result.allowed) {
         if (onLimit) {
           try {
-            onLimit(result, ctx);
+            await onLimit(result, ctx);
           } catch {
             // swallow
           }

@@ -68,19 +68,19 @@ describe('validateConfig edge cases (T042)', () => {
     });
 
     it('rejects array message', () => {
-      expect(() => validateConfig({ ...validBase, message: ['error'] as never })).toThrow("'message' must be a string or non-array object");
+      expect(() => validateConfig({ ...validBase, message: ['error'] as never })).toThrow("'message' must be a string, non-array object, or function");
     });
 
     it('rejects null message', () => {
-      expect(() => validateConfig({ ...validBase, message: null as never })).toThrow("'message' must be a string or non-array object");
+      expect(() => validateConfig({ ...validBase, message: null as never })).toThrow("'message' must be a string, non-array object, or function");
     });
 
     it('rejects number message', () => {
-      expect(() => validateConfig({ ...validBase, message: 42 as never })).toThrow("'message' must be a string or non-array object");
+      expect(() => validateConfig({ ...validBase, message: 42 as never })).toThrow("'message' must be a string, non-array object, or function");
     });
 
     it('rejects boolean message', () => {
-      expect(() => validateConfig({ ...validBase, message: true as never })).toThrow("'message' must be a string or non-array object");
+      expect(() => validateConfig({ ...validBase, message: true as never })).toThrow("'message' must be a string, non-array object, or function");
     });
   });
 

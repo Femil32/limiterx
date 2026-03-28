@@ -155,4 +155,50 @@ describe('rateLimitExpress', () => {
 
     expect(res.status).toBe(503);
   });
+
+  describe('algorithm: sliding-window', () => {
+    it('allows requests up to max and denies beyond', async () => {
+      app = express();
+      app.use(
+        rateLimitExpress({
+          max: 2,
+          window: '1m',
+          algorithm: 'sliding-window',
+          keyGenerator: () => 'sw-key',
+        }),
+      );
+      app.get('/', (_req, res) => res.send('ok'));
+
+      const res1 = await request(app).get('/');
+      const res2 = await request(app).get('/');
+      const res3 = await request(app).get('/');
+
+      expect(res1.status).toBe(200);
+      expect(res2.status).toBe(200);
+      expect(res3.status).toBe(429);
+    });
+  });
+
+  describe('algorithm: token-bucket', () => {
+    it('allows requests up to max and denies beyond', async () => {
+      app = express();
+      app.use(
+        rateLimitExpress({
+          max: 2,
+          window: '1m',
+          algorithm: 'token-bucket',
+          keyGenerator: () => 'tb-key',
+        }),
+      );
+      app.get('/', (_req, res) => res.send('ok'));
+
+      const res1 = await request(app).get('/');
+      const res2 = await request(app).get('/');
+      const res3 = await request(app).get('/');
+
+      expect(res1.status).toBe(200);
+      expect(res2.status).toBe(200);
+      expect(res3.status).toBe(429);
+    });
+  });
 });

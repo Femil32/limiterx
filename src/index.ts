@@ -15,6 +15,8 @@ export type {
   LimiterxConfig,
   RateLimiterResult,
   FixedWindowState,
+  TokenBucketState,
+  StorageAdapter,
   RequestContext,
   RateLimiter,
 } from './core/types.js';
