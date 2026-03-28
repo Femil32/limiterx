@@ -1,6 +1,6 @@
-# Flowguard - npm Publishing Checklist
+# Limiterx - npm Publishing Checklist
 
-Step-by-step guide to publish Flowguard to npm.
+Step-by-step guide to publish Limiterx to npm.
 
 ---
 
@@ -18,12 +18,12 @@ Step-by-step guide to publish Flowguard to npm.
 
 - [ ] Update `version` in `package.json` (follow [semver](https://semver.org/))
 - [ ] Update `CHANGELOG.md` with release notes
-- [ ] Ensure the version hasn't been published already: `npm view flowguard versions`
+- [ ] Ensure the version hasn't been published already: `npm view limiterx versions`
 
 ### 2. Run All Quality Gates
 
 ```bash
-# From the flowguard root directory
+# From the limiterx root directory
 npm run typecheck      # TypeScript compilation check
 npm run lint           # ESLint
 npm test               # 244 tests + coverage thresholds
@@ -66,13 +66,13 @@ npm pack --dry-run
 
 ```bash
 npm pack
-# Creates flowguard-1.0.0.tgz
+# Creates limiterx-1.0.0.tgz
 ```
 
-- [ ] Install in a test project: `npm install /path/to/flowguard-1.0.0.tgz`
+- [ ] Install in a test project: `npm install /path/to/limiterx-1.0.0.tgz`
 - [ ] Test at least Express and React adapters work (see `docs/local-testing-guide.md`)
-- [ ] CJS `require('flowguard')` works
-- [ ] ESM `import from 'flowguard'` works
+- [ ] CJS `require('limiterx')` works
+- [ ] ESM `import from 'limiterx'` works
 - [ ] TypeScript types resolve correctly
 
 ---
@@ -108,11 +108,11 @@ npm publish
 ### 9. Verify on npm
 
 ```bash
-npm view flowguard
+npm view limiterx
 ```
 
 - [ ] Version matches what you published
-- [ ] Check [npmjs.com/package/flowguard](https://www.npmjs.com/package/flowguard) in a browser
+- [ ] Check [npmjs.com/package/limiterx](https://www.npmjs.com/package/limiterx) in a browser
 - [ ] README renders correctly on npm
 
 ### 10. Smoke Test from npm
@@ -120,11 +120,11 @@ npm view flowguard
 ```bash
 mkdir verify-publish && cd verify-publish
 npm init -y
-npm install flowguard
+npm install limiterx
 ```
 
 ```js
-import { createRateLimiter } from 'flowguard';
+import { createRateLimiter } from 'limiterx';
 const limiter = createRateLimiter({ max: 5, window: '30s' });
 const result = await limiter.check('test');
 console.log(result); // { allowed: true, remaining: 4, ... }
@@ -133,7 +133,7 @@ limiter.destroy();
 
 - [ ] Package installs from npm registry
 - [ ] Core import works
-- [ ] At least one adapter import works (e.g., `flowguard/express`)
+- [ ] At least one adapter import works (e.g., `limiterx/express`)
 
 ---
 
@@ -141,7 +141,7 @@ limiter.destroy();
 
 - [ ] Create a GitHub Release for the tag with changelog notes
 - [ ] Announce the release (Twitter, Discord, blog, etc.)
-- [ ] Delete the local `.tgz` test file: `rm flowguard-*.tgz`
+- [ ] Delete the local `.tgz` test file: `rm limiterx-*.tgz`
 - [ ] Clean up any test directories you created
 
 ---
@@ -151,7 +151,7 @@ limiter.destroy();
 If you published by mistake within 72 hours:
 
 ```bash
-npm unpublish flowguard@1.0.0
+npm unpublish limiterx@1.0.0
 ```
 
 After 72 hours, contact npm support. This is destructive -- avoid it.
@@ -160,9 +160,9 @@ After 72 hours, contact npm support. This is destructive -- avoid it.
 
 ## Publishing a Scoped Package (Alternative)
 
-If `flowguard` is taken on npm, use a scoped name:
+If `limiterx` is taken on npm, use a scoped name:
 
-1. In `package.json`, change `"name"` to `"@your-scope/flowguard"`
+1. In `package.json`, change `"name"` to `"@your-scope/limiterx"`
 2. Update all example imports in docs accordingly
 3. Publish: `npm publish --access public`
 
@@ -180,4 +180,4 @@ If `flowguard` is taken on npm, use a scoped name:
 | Tree shake | `node scripts/verify-tree-shake.mjs` | Pass |
 | Dry run | `npm pack --dry-run` | Only dist + docs |
 | Publish | `npm publish --access public` | Success |
-| Verify | `npm view flowguard` | Correct version |
+| Verify | `npm view limiterx` | Correct version |

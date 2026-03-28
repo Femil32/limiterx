@@ -1,4 +1,4 @@
-import { useRateLimit } from 'flowguard/react';
+import { useRateLimit } from 'limiterx/react';
 
 export default function App() {
   const { allowed, remaining, retryAfter, attempt, reset } = useRateLimit('demo', {

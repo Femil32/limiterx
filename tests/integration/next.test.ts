@@ -144,4 +144,39 @@ describe('rateLimitEdge', () => {
     expect(response!.headers.get('RateLimit-Reset')).not.toBeNull();
     expect(response!.headers.get('Retry-After')).not.toBeNull();
   });
+
+  it('draft-6: denied Response has combined RateLimit header', async () => {
+    const middleware = rateLimitEdge({ max: 1, window: '1m', keyGenerator: () => 'edge-d6', standardHeaders: 'draft-6' });
+    const req = makeMockNextRequest({ ip: '1.1.1.1' });
+
+    await middleware(req); // allowed
+    const response = await middleware(req); // denied
+
+    expect(response).toBeInstanceOf(Response);
+    expect(response!.headers.get('RateLimit')).toMatch(/limit=\d+/);
+    expect(response!.headers.get('RateLimit-Limit')).toBeNull();
+  });
+
+  it('draft-8: denied Response has RateLimit-Policy header', async () => {
+    const middleware = rateLimitEdge({ max: 1, window: 60000, keyGenerator: () => 'edge-d8', standardHeaders: 'draft-8' });
+    const req = makeMockNextRequest({ ip: '2.2.2.2' });
+
+    await middleware(req); // allowed
+    const response = await middleware(req); // denied
+
+    expect(response).toBeInstanceOf(Response);
+    expect(response!.headers.get('RateLimit-Policy')).toMatch(/1;w=\d+/);
+  });
+
+  it('legacyHeaders: denied Response has X-RateLimit-* headers', async () => {
+    const middleware = rateLimitEdge({ max: 1, window: '1m', keyGenerator: () => 'edge-legacy', legacyHeaders: true });
+    const req = makeMockNextRequest({ ip: '3.3.3.3' });
+
+    await middleware(req); // allowed
+    const response = await middleware(req); // denied
+
+    expect(response).toBeInstanceOf(Response);
+    expect(response!.headers.get('X-RateLimit-Limit')).not.toBeNull();
+    expect(response!.headers.get('X-RateLimit-Reset')).not.toBeNull();
+  });
 });

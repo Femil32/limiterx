@@ -4,11 +4,13 @@ globs: ["**/*"]
 alwaysApply: true
 ---
 
-# flowguard Development Guidelines
+# Limiterx Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-03-23
+Auto-generated from all feature plans. Last updated: 2026-03-24
 
 ## Active Technologies
+- TypeScript 5.7+ targeting ES2022; Node.js >=18.0.0 + sup 8.x (build), vitest 3.x (test), eslint 9.x (lint); `redis` / `ioredis` as optional peer dependencies for the Redis adapter (002-algo-storage-size)
+- In-memory `MemoryStore` (default); new `RedisStore` (optional, separate entry point) (002-algo-storage-size)
 
 - TypeScript 5.x (strict mode), targeting ES2022; Node.js ≥ 18.0.0 + Zero runtime dependencies in core; `react` as peerDependency for React adapter; `express`/`koa`/`next`/`axios` as peerDependencies for respective adapters (001-production-readiness)
 
@@ -28,6 +30,7 @@ npm test && npm run lint
 TypeScript 5.x (strict mode), targeting ES2022; Node.js ≥ 18.0.0: Follow standard conventions
 
 ## Recent Changes
+- 002-algo-storage-size: Added TypeScript 5.7+ targeting ES2022; Node.js >=18.0.0 + sup 8.x (build), vitest 3.x (test), eslint 9.x (lint); `redis` / `ioredis` as optional peer dependencies for the Redis adapter
 
 - 001-production-readiness: Added TypeScript 5.x (strict mode), targeting ES2022; Node.js ≥ 18.0.0 + Zero runtime dependencies in core; `react` as peerDependency for React adapter; `express`/`koa`/`next`/`axios` as peerDependencies for respective adapters
 

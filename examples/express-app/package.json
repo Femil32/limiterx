@@ -1,5 +1,5 @@
 {
-  "name": "flowguard-express-example",
+  "name": "limiterx-express-example",
   "private": true,
   "type": "module",
   "scripts": {
@@ -7,6 +7,6 @@
   },
   "dependencies": {
     "express": "^4.21.0",
-    "flowguard": "file:../.."
+    "limiterx": "file:../.."
   }
 }

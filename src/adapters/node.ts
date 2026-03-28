@@ -1,7 +1,9 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import type { FlowGuardConfig, RateLimiterResult, RequestContext } from '../core/types.js';
+import type { LimiterxConfig, RateLimiterResult, RequestContext } from '../core/types.js';
 import { createRateLimiter } from '../core/createRateLimiter.js';
-import { setRateLimitHeadersFull } from './internal/rate-limit-headers.js';
+import { parseWindow } from '../core/parseWindow.js';
+import { setRateLimitHeaders } from './internal/rate-limit-headers.js';
+import { maskIPv6 } from './internal/ipv6.js';
 
 /**
  * Node HTTP rate limiter result.
@@ -21,7 +23,7 @@ export interface NodeRateLimiter {
  * @example
  * ```typescript
  * import http from 'http';
- * import { rateLimitNode } from 'flowguard/node';
+ * import { rateLimitNode } from 'limiterx/node';
  *
  * const limiter = rateLimitNode({ max: 50, window: '1m' });
  *
@@ -36,57 +38,85 @@ export interface NodeRateLimiter {
  * }).listen(3000);
  * ```
  */
-export function rateLimitNode(config: FlowGuardConfig): NodeRateLimiter {
+export function rateLimitNode(config: LimiterxConfig): NodeRateLimiter {
+  const ipv6Subnet = config.ipv6Subnet !== undefined ? config.ipv6Subnet : 56;
+
   const defaultKeyGenerator = (ctx: RequestContext) => {
     const req = ctx.req as IncomingMessage;
-    return req.socket?.remoteAddress || '127.0.0.1';
+    const ip = req.socket?.remoteAddress || '127.0.0.1';
+    return ipv6Subnet !== false ? maskIPv6(ip, ipv6Subnet) : ip;
   };
 
-  const resolvedConfig: FlowGuardConfig = {
+  const resolvedConfig: LimiterxConfig = {
     ...config,
     keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
     onLimit: undefined,
   };
 
+  const windowMs = parseWindow(config.window);
   const limiter = createRateLimiter(resolvedConfig);
   const skip = config.skip;
   const onLimit = config.onLimit;
   const headers = config.headers !== false;
+  const legacyHeaders = config.legacyHeaders ?? false;
+  const standardHeaders = config.standardHeaders ?? 'draft-7';
+  const identifier = config.identifier;
   const debug = config.debug ?? false;
+  const passOnStoreError = config.passOnStoreError ?? false;
+  // NOTE: skipSuccessfulRequests/skipFailedRequests in the Node adapter is developer-managed.
+  // The node adapter returns a result and the developer controls the response; call
+  // `limiter.decrement(key)` manually after the response if you want to skip counting.
 
   return {
     async check(req: IncomingMessage, res: ServerResponse): Promise<RateLimiterResult> {
       const ctx: RequestContext = { key: '', req, res };
 
       // FR-019: keyGenerator errors propagate
-      const key = resolvedConfig.keyGenerator!(ctx);
+      const key = await resolvedConfig.keyGenerator!(ctx);
       ctx.key = key;
 
-      if (skip && skip(ctx)) {
+      if (skip && (await skip(ctx))) {
         // Skip: don't count, return a synthetic result
+        const staticMax = typeof resolvedConfig.max === 'number' ? resolvedConfig.max : 0;
         const result: RateLimiterResult = {
           allowed: true,
-          remaining: resolvedConfig.max,
-          limit: resolvedConfig.max,
+          remaining: staticMax,
+          limit: staticMax,
           retryAfter: 0,
           resetAt: new Date(Date.now()),
           key: key || 'global',
         };
         if (headers) {
-          setRateLimitHeadersFull((name, value) => res.setHeader(name, value), result);
+          setRateLimitHeaders((name, value) => res.setHeader(name, value), result, { standard: true, legacyHeaders, standardHeaders, identifier, windowMs });
         }
         return result;
       }
 
-      const result = await limiter.check(key);
+      let result: RateLimiterResult;
+      try {
+        result = await limiter.check(key);
+      } catch (storeErr) {
+        if (passOnStoreError) {
+          const staticMax = typeof resolvedConfig.max === 'number' ? resolvedConfig.max : 0;
+          return {
+            allowed: true,
+            remaining: staticMax,
+            limit: staticMax,
+            retryAfter: 0,
+            resetAt: new Date(Date.now()),
+            key: key || 'global',
+          };
+        }
+        throw storeErr;
+      }
 
-      if (headers) {
-        setRateLimitHeadersFull((name, value) => res.setHeader(name, value), result);
+      if (headers || legacyHeaders) {
+        setRateLimitHeaders((name, value) => res.setHeader(name, value), result, { standard: headers, legacyHeaders, standardHeaders, identifier, windowMs });
       }
 
       if (!result.allowed && onLimit) {
         try {
-          onLimit(result, ctx);
+          await onLimit(result, ctx);
         } catch {
           // swallow
         }
@@ -94,7 +124,7 @@ export function rateLimitNode(config: FlowGuardConfig): NodeRateLimiter {
 
       if (debug) {
         const action = result.allowed ? 'ALLOW' : 'DENY';
-        console.log(`[flowguard:node] ${action} key="${result.key}" remaining=${result.remaining}`);
+        console.log(`[limiterx:node] ${action} key="${result.key}" remaining=${result.remaining}`);
       }
 
       return result;

@@ -46,7 +46,7 @@ describe('createRateLimiter', () => {
       const result = await limiter.check('user-123')
       // The public key should not contain the internal prefix
       expect(result.key).toBe('user-123')
-      expect(result.key).not.toContain('flowguard:')
+      expect(result.key).not.toContain('limiterx:')
     })
   })
 
@@ -213,11 +213,82 @@ describe('createRateLimiter', () => {
 
   describe('configuration validation', () => {
     it('throws on invalid config', () => {
-      expect(() => createRateLimiter({ max: -1, window: '1m' })).toThrow('[flowguard]')
+      expect(() => createRateLimiter({ max: -1, window: '1m' })).toThrow('[limiterx]')
     })
 
     it('throws on invalid window', () => {
-      expect(() => createRateLimiter({ max: 10, window: 'bad' })).toThrow('[flowguard]')
+      expect(() => createRateLimiter({ max: 10, window: 'bad' })).toThrow('[limiterx]')
+    })
+
+    it('throws on invalid algorithm', () => {
+      expect(() => createRateLimiter({ max: 10, window: '1m', algorithm: 'leaky-bucket' as never })).toThrow('[limiterx]')
+    })
+  })
+
+  describe('algorithm: sliding-window', () => {
+    beforeEach(() => {
+      limiter = createRateLimiter({ max: 3, window: '1m', algorithm: 'sliding-window' })
+    })
+
+    it('allows requests up to max', async () => {
+      for (let i = 0; i < 3; i++) {
+        const result = await limiter.check('user')
+        expect(result.allowed).toBe(true)
+      }
+    })
+
+    it('denies on max + 1', async () => {
+      for (let i = 0; i < 3; i++) await limiter.check('user')
+      const result = await limiter.check('user')
+      expect(result.allowed).toBe(false)
+    })
+
+    it('reset() clears state and allows again', async () => {
+      for (let i = 0; i < 3; i++) await limiter.check('user')
+      await limiter.reset('user')
+      const result = await limiter.check('user')
+      expect(result.allowed).toBe(true)
+    })
+  })
+
+  describe('algorithm: token-bucket', () => {
+    beforeEach(() => {
+      limiter = createRateLimiter({ max: 3, window: '1m', algorithm: 'token-bucket' })
+    })
+
+    it('allows requests up to max', async () => {
+      for (let i = 0; i < 3; i++) {
+        const result = await limiter.check('user')
+        expect(result.allowed).toBe(true)
+      }
+    })
+
+    it('denies when bucket is exhausted', async () => {
+      for (let i = 0; i < 3; i++) await limiter.check('user')
+      const result = await limiter.check('user')
+      expect(result.allowed).toBe(false)
+    })
+
+    it('reset() clears state and allows again', async () => {
+      for (let i = 0; i < 3; i++) await limiter.check('user')
+      await limiter.reset('user')
+      const result = await limiter.check('user')
+      expect(result.allowed).toBe(true)
+    })
+  })
+
+  describe('custom store', () => {
+    it('accepts store: new MemoryStore() as custom store', async () => {
+      const { MemoryStore } = await import('../../src/core/storage/MemoryStore.js')
+      const customStore = new MemoryStore({ maxKeys: 100 })
+      limiter = createRateLimiter({ max: 2, window: '1m', store: customStore })
+      const result = await limiter.check('user')
+      expect(result.allowed).toBe(true)
+      customStore.destroy()
+    })
+
+    it('throws on invalid store object', () => {
+      expect(() => createRateLimiter({ max: 10, window: '1m', store: {} as never })).toThrow('[limiterx]')
     })
   })
 })

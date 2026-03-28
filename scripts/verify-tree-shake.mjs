@@ -2,7 +2,7 @@
 
 /**
  * Tree-shaking smoke test (T046).
- * Verifies that importing flowguard/express does not pull in React/Koa/Axios code.
+ * Verifies that importing limiterx/express does not pull in React/Koa/Axios code.
  *
  * Run: node scripts/verify-tree-shake.mjs
  */

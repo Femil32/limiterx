@@ -1,8 +1,7 @@
-import type { FixedWindowState, StorageAdapter } from '../types.js';
+import type { StorageAdapter } from '../types.js';
 
 interface MemoryEntry {
-  count: number;
-  windowStart: number;
+  data: Record<string, number>;
   expiresAt: number;
 }
 
@@ -34,7 +33,7 @@ export class MemoryStore implements StorageAdapter {
   }
 
   /** @inheritdoc */
-  async get(key: string): Promise<FixedWindowState | null> {
+  async get(key: string): Promise<Record<string, number> | null> {
     const entry = this.map.get(key);
     if (!entry) return null;
 
@@ -47,17 +46,16 @@ export class MemoryStore implements StorageAdapter {
     this.map.delete(key);
     this.map.set(key, entry);
 
-    return { count: entry.count, windowStart: entry.windowStart };
+    return { ...entry.data };
   }
 
   /** @inheritdoc */
-  async set(key: string, state: FixedWindowState, ttlMs: number): Promise<void> {
+  async set(key: string, state: Record<string, number>, ttlMs: number): Promise<void> {
     this.evictIfNeeded(key);
 
     this.map.delete(key); // Remove to re-insert at end
     this.map.set(key, {
-      count: state.count,
-      windowStart: state.windowStart,
+      data: { ...state },
       expiresAt: Date.now() + ttlMs,
     });
   }
@@ -68,11 +66,11 @@ export class MemoryStore implements StorageAdapter {
     const now = Date.now();
 
     if (existing && existing.expiresAt >= now) {
-      existing.count++;
+      existing.data['count'] = (existing.data['count'] ?? 0) + 1;
       // Move to end for LRU
       this.map.delete(key);
       this.map.set(key, existing);
-      return existing.count;
+      return existing.data['count'];
     }
 
     // New entry or expired
@@ -82,12 +80,20 @@ export class MemoryStore implements StorageAdapter {
     this.evictIfNeeded(key);
 
     const entry: MemoryEntry = {
-      count: 1,
-      windowStart: now,
+      data: { count: 1, windowStart: now },
       expiresAt: now + ttlMs,
     };
     this.map.set(key, entry);
     return 1;
+  }
+
+  /** @inheritdoc */
+  async decrement(key: string, _ttlMs: number): Promise<void> {
+    const entry = this.map.get(key);
+    if (!entry || entry.expiresAt < Date.now()) return; // no-op if missing/expired
+    if ((entry.data['count'] ?? 0) > 0) {
+      entry.data['count'] = (entry.data['count'] ?? 1) - 1;
+    }
   }
 
   /** @inheritdoc */

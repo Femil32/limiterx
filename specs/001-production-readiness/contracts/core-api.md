@@ -3,9 +3,9 @@
 **Feature Branch**: `001-production-readiness`  
 **Date**: 2026-03-23
 
-## Public Exports from `flowguard` (main entry)
+## Public Exports from `limiterx` (main entry)
 
-### `createRateLimiter(config: FlowGuardConfig): RateLimiter`
+### `createRateLimiter(config: LimiterxConfig): RateLimiter`
 
 Factory function that validates config and returns a configured limiter instance.
 
@@ -13,17 +13,17 @@ Factory function that validates config and returns a configured limiter instance
 - Validates all config fields synchronously at call time (see Validation Rules in data-model.md)
 - Throws `Error` with descriptive message on invalid config
 - Returns a `RateLimiter` instance with `check()`, `reset()`, and `clear()` methods
-- Always uses an internal `MemoryStore` — v1.0 does not accept a public `store` field on `FlowGuardConfig` (`spec.md` clarifications; see `data-model.md`)
+- Always uses an internal `MemoryStore` — v1.0 does not accept a public `store` field on `LimiterxConfig` (`spec.md` clarifications; see `data-model.md`)
 - Defaults `algorithm` to `'fixed-window'`
 
 **Signature**:
 ```typescript
-function createRateLimiter(config: FlowGuardConfig): RateLimiter;
+function createRateLimiter(config: LimiterxConfig): RateLimiter;
 ```
 
 **Example**:
 ```typescript
-import { createRateLimiter } from 'flowguard';
+import { createRateLimiter } from 'limiterx';
 
 const limiter = createRateLimiter({
   max: 100,
@@ -46,7 +46,7 @@ Execute a rate limit check for the given key.
 - Loads state from storage; resets if window has changed
 - If `count >= max`: returns `{ allowed: false, remaining: 0, retryAfter: msUntilReset, ... }` and fires `onLimit` if configured
 - If `count < max`: increments count, returns `{ allowed: true, remaining: max - count - 1, ... }`
-- Storage key is namespaced: `flowguard:{userKey}`
+- Storage key is namespaced: `limiterx:{userKey}`
 
 **Guarantees**:
 - Result `remaining` is always `>= 0`
@@ -61,7 +61,7 @@ Execute a rate limit check for the given key.
 Remove rate limit state for a specific key.
 
 **Behavior**:
-- Deletes the namespaced key (`flowguard:{key}`) from storage
+- Deletes the namespaced key (`limiterx:{key}`) from storage
 - Next `check()` for this key starts with a fresh window
 
 ---
@@ -126,10 +126,10 @@ class MemoryStore implements StorageAdapter {
 
 ## Type Exports
 
-The following types are exported from the main `flowguard` entry point:
+The following types are exported from the main `limiterx` entry point:
 
 ```typescript
-export type { FlowGuardConfig };
+export type { LimiterxConfig };
 export type { RateLimiterResult };
 export type { FixedWindowState };
 export type { RequestContext };

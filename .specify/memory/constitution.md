@@ -1,18 +1,18 @@
 <!--
 Sync Impact Report
-Version change: initial template → 1.0.0
-Modified principles: N/A (first adoption; placeholders replaced)
-Added sections: Core Principles I–IV, Technology Alignment, Development Workflow & Quality Gates, Governance
-Removed sections: Template placeholder commentary (HTML examples) — superseded by concrete text
+Version change: 1.0.0 → 1.0.1
+Modified principles: none
+Added sections: none
+Removed sections: none
 Templates requiring updates:
-  - .specify/templates/plan-template.md ✅ updated (Constitution Check gates)
-  - .specify/templates/spec-template.md ✅ updated (NFR subsection)
-  - .specify/templates/tasks-template.md ✅ updated (testing/constitution alignment)
-  - .specify/templates/commands/*.md — N/A (directory not present)
+  - .specify/templates/plan-template.md ✅ verified (Constitution Check matches Principles I–IV)
+  - .specify/templates/spec-template.md ✅ verified (NFR subsection aligns with constitution)
+  - .specify/templates/tasks-template.md ✅ verified (tests / polish reference constitution)
+  - .cursor/commands/speckit.constitution.md ✅ updated (command discovery path: .cursor/commands/*.md)
 Follow-up TODOs: none
 -->
 
-# Flowguard Constitution
+# Limiterx Constitution
 
 ## Core Principles
 
@@ -23,7 +23,7 @@ Follow-up TODOs: none
 - Public API surface MUST remain coherent: new exports MUST be intentional, documented, and consistent with existing naming and module boundaries.
 - Duplication MUST be eliminated via shared helpers when it affects correctness paths or adapter behavior; speculative abstractions are discouraged—justify non-obvious structure in the implementation plan.
 
-**Rationale:** Flowguard is a library consumed across runtimes; maintainability and predictable structure reduce integration risk and security bugs.
+**Rationale:** Limiterx is a library consumed across runtimes; maintainability and predictable structure reduce integration risk and security bugs.
 
 ### II. Testing Standards
 
@@ -52,7 +52,7 @@ Follow-up TODOs: none
 ## Technology Alignment
 
 - Primary language: TypeScript (JavaScript emit as defined by the project). Runtimes: browser, Node.js, and edge as stated in project documentation.
-- Adapters and public APIs MUST align with the package identity in the Flowguard PRD: unified configuration, first-class adapters for listed frameworks, and portable core logic.
+- Adapters and public APIs MUST align with the package identity in the Limiterx PRD: unified configuration, first-class adapters for listed frameworks, and portable core logic.
 - Dependencies MUST be minimal and justified; new runtime dependencies require review for bundle size, licensing, and security posture.
 
 ## Development Workflow & Quality Gates
@@ -64,9 +64,9 @@ Follow-up TODOs: none
 
 ## Governance
 
-- This constitution supersedes conflicting informal practices for Flowguard development and planning workflows that reference `.specify/`.
+- This constitution supersedes conflicting informal practices for Limiterx development and planning workflows that reference `.specify/`.
 - **Amendments:** Proposed changes MUST be written to `.specify/memory/constitution.md`, with version bumped per semantic rules (MAJOR: incompatible governance or removed principles; MINOR: new principle or material new guidance; PATCH: clarifications and non-semantic edits). Dependent templates MUST be updated in the same change when gates or mandatory sections change.
 - **Compliance:** Plan authors and reviewers MUST verify Constitution Check items; at least a lightweight review against Core Principles SHOULD occur before release tagging.
 - **Runtime guidance:** Day-to-day coding conventions in repository docs (e.g. PRD, contributing guide when present) MUST not contradict this constitution; if they conflict, this document wins until amended.
 
-**Version**: 1.0.0 | **Ratified**: 2026-03-23 | **Last Amended**: 2026-03-23
+**Version**: 1.0.1 | **Ratified**: 2026-03-23 | **Last Amended**: 2026-03-27

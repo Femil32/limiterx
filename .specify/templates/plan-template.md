@@ -31,7 +31,7 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Per `.specify/memory/constitution.md` (Flowguard Constitution), verify:
+Per `.specify/memory/constitution.md` (Limiterx Constitution), verify:
 
 - [ ] **Code quality & maintainability**: Structure matches module/API boundaries; complexity deviations are listed under Complexity Tracking with rationale.
 - [ ] **Testing standards**: Test layers chosen (unit / contract / integration) cover spec behavior and adapter surfaces touched by this feature.

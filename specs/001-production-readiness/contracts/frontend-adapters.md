@@ -7,7 +7,7 @@
 
 All frontend adapters share these guarantees:
 
-1. **Config shape**: Accept `FlowGuardConfig` (same as core) with frontend-specific defaults.
+1. **Config shape**: Accept `LimiterxConfig` (same as core) with frontend-specific defaults.
 2. **Default `keyGenerator`**: Returns `'global'` (single shared limit) unless overridden.
 3. **No HTTP headers**: Frontend adapters do not set HTTP headers — they control client-side behavior only.
 4. **`onLimit` callback**: Fires when an action/request is blocked, receives `RateLimiterResult`.
@@ -15,13 +15,13 @@ All frontend adapters share these guarantees:
 
 ---
 
-## `flowguard/react` — React Hook
+## `limiterx/react` — React Hook
 
-### `useRateLimit(key: string, config: FlowGuardConfig): UseRateLimitReturn`
+### `useRateLimit(key: string, config: LimiterxConfig): UseRateLimitReturn`
 
 **Signature**:
 ```typescript
-import { useRateLimit } from 'flowguard/react';
+import { useRateLimit } from 'limiterx/react';
 
 interface UseRateLimitReturn {
   allowed: boolean;
@@ -53,7 +53,7 @@ function useRateLimit(key: string, config: {
 
 **Example**:
 ```typescript
-import { useRateLimit } from 'flowguard/react';
+import { useRateLimit } from 'limiterx/react';
 
 function SubmitButton() {
   const { allowed, remaining, retryAfter, attempt, reset } = useRateLimit('form-submit', {
@@ -78,13 +78,13 @@ function SubmitButton() {
 
 ---
 
-## `flowguard/fetch` — Fetch Wrapper
+## `limiterx/fetch` — Fetch Wrapper
 
-### `rateLimitFetch(fetchFn: typeof fetch, config: FlowGuardConfig): typeof fetch`
+### `rateLimitFetch(fetchFn: typeof fetch, config: LimiterxConfig): typeof fetch`
 
 **Signature**:
 ```typescript
-import { rateLimitFetch } from 'flowguard/fetch';
+import { rateLimitFetch } from 'limiterx/fetch';
 
 function rateLimitFetch(
   fetchFn: typeof fetch,
@@ -108,7 +108,7 @@ function rateLimitFetch(
 
 **Example**:
 ```typescript
-import { rateLimitFetch } from 'flowguard/fetch';
+import { rateLimitFetch } from 'limiterx/fetch';
 
 const guardedFetch = rateLimitFetch(fetch, {
   max: 10,
@@ -127,13 +127,13 @@ try {
 
 ---
 
-## `flowguard/axios` — Axios Interceptor
+## `limiterx/axios` — Axios Interceptor
 
-### `rateLimitAxios(instance: AxiosInstance, config: FlowGuardConfig): AxiosInstance`
+### `rateLimitAxios(instance: AxiosInstance, config: LimiterxConfig): AxiosInstance`
 
 **Signature**:
 ```typescript
-import { rateLimitAxios } from 'flowguard/axios';
+import { rateLimitAxios } from 'limiterx/axios';
 
 function rateLimitAxios(
   instance: AxiosInstance,
@@ -158,7 +158,7 @@ function rateLimitAxios(
 **Example**:
 ```typescript
 import axios from 'axios';
-import { rateLimitAxios } from 'flowguard/axios';
+import { rateLimitAxios } from 'limiterx/axios';
 
 const client = rateLimitAxios(axios.create({ baseURL: 'https://api.example.com' }), {
   max: 10,

@@ -10,23 +10,23 @@ describe('validateConfig', () => {
     })
 
     it('throws for max = 0', () => {
-      expect(() => validateConfig({ ...baseConfig, max: 0 })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, max: 0 })).toThrow('[limiterx]')
     })
 
     it('throws for negative max', () => {
-      expect(() => validateConfig({ ...baseConfig, max: -5 })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, max: -5 })).toThrow('[limiterx]')
     })
 
     it('throws for float max', () => {
-      expect(() => validateConfig({ ...baseConfig, max: 1.5 })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, max: 1.5 })).toThrow('[limiterx]')
     })
 
     it('throws for NaN max', () => {
-      expect(() => validateConfig({ ...baseConfig, max: NaN })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, max: NaN })).toThrow('[limiterx]')
     })
 
     it('throws for string max', () => {
-      expect(() => validateConfig({ ...baseConfig, max: 'string' as unknown as number })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, max: 'string' as unknown as number })).toThrow('[limiterx]')
     })
   })
 
@@ -40,19 +40,19 @@ describe('validateConfig', () => {
     })
 
     it('throws for invalid window string', () => {
-      expect(() => validateConfig({ max: 10, window: 'invalid' })).toThrow('[flowguard]')
+      expect(() => validateConfig({ max: 10, window: 'invalid' })).toThrow('[limiterx]')
     })
 
     it('throws for window = 0', () => {
-      expect(() => validateConfig({ max: 10, window: 0 })).toThrow('[flowguard]')
+      expect(() => validateConfig({ max: 10, window: 0 })).toThrow('[limiterx]')
     })
 
     it('throws for negative window', () => {
-      expect(() => validateConfig({ max: 10, window: -1000 })).toThrow('[flowguard]')
+      expect(() => validateConfig({ max: 10, window: -1000 })).toThrow('[limiterx]')
     })
   })
 
-  describe('V-004: algorithm must be fixed-window or undefined', () => {
+  describe('V-004: algorithm must be a valid value or undefined', () => {
     it('accepts undefined algorithm', () => {
       expect(() => validateConfig({ ...baseConfig })).not.toThrow()
     })
@@ -61,8 +61,16 @@ describe('validateConfig', () => {
       expect(() => validateConfig({ ...baseConfig, algorithm: 'fixed-window' })).not.toThrow()
     })
 
+    it("accepts 'sliding-window' algorithm", () => {
+      expect(() => validateConfig({ ...baseConfig, algorithm: 'sliding-window' })).not.toThrow()
+    })
+
+    it("accepts 'token-bucket' algorithm", () => {
+      expect(() => validateConfig({ ...baseConfig, algorithm: 'token-bucket' })).not.toThrow()
+    })
+
     it('throws for unknown algorithm', () => {
-      expect(() => validateConfig({ ...baseConfig, algorithm: 'sliding-window' as 'fixed-window' })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, algorithm: 'leaky-bucket' as 'fixed-window' })).toThrow('[limiterx]')
     })
   })
 
@@ -76,7 +84,7 @@ describe('validateConfig', () => {
     })
 
     it('throws for non-function keyGenerator', () => {
-      expect(() => validateConfig({ ...baseConfig, keyGenerator: 'not-a-function' as unknown as () => string })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, keyGenerator: 'not-a-function' as unknown as () => string })).toThrow('[limiterx]')
     })
   })
 
@@ -90,7 +98,7 @@ describe('validateConfig', () => {
     })
 
     it('throws for non-function skip', () => {
-      expect(() => validateConfig({ ...baseConfig, skip: true as unknown as () => boolean })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, skip: true as unknown as () => boolean })).toThrow('[limiterx]')
     })
   })
 
@@ -104,7 +112,7 @@ describe('validateConfig', () => {
     })
 
     it('throws for non-function onLimit', () => {
-      expect(() => validateConfig({ ...baseConfig, onLimit: 'callback' as unknown as () => void })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, onLimit: 'callback' as unknown as () => void })).toThrow('[limiterx]')
     })
   })
 
@@ -122,15 +130,15 @@ describe('validateConfig', () => {
     })
 
     it('throws for statusCode = 99 (below min)', () => {
-      expect(() => validateConfig({ ...baseConfig, statusCode: 99 })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, statusCode: 99 })).toThrow('[limiterx]')
     })
 
     it('throws for statusCode = 600 (above max)', () => {
-      expect(() => validateConfig({ ...baseConfig, statusCode: 600 })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, statusCode: 600 })).toThrow('[limiterx]')
     })
 
     it('throws for float statusCode', () => {
-      expect(() => validateConfig({ ...baseConfig, statusCode: 429.5 })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, statusCode: 429.5 })).toThrow('[limiterx]')
     })
   })
 
@@ -148,7 +156,7 @@ describe('validateConfig', () => {
     })
 
     it('throws for string headers', () => {
-      expect(() => validateConfig({ ...baseConfig, headers: 'yes' as unknown as boolean })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, headers: 'yes' as unknown as boolean })).toThrow('[limiterx]')
     })
   })
 
@@ -162,15 +170,15 @@ describe('validateConfig', () => {
     })
 
     it('throws for maxKeys = 0', () => {
-      expect(() => validateConfig({ ...baseConfig, maxKeys: 0 })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, maxKeys: 0 })).toThrow('[limiterx]')
     })
 
     it('throws for negative maxKeys', () => {
-      expect(() => validateConfig({ ...baseConfig, maxKeys: -1 })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, maxKeys: -1 })).toThrow('[limiterx]')
     })
 
     it('throws for float maxKeys', () => {
-      expect(() => validateConfig({ ...baseConfig, maxKeys: 1000.5 })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, maxKeys: 1000.5 })).toThrow('[limiterx]')
     })
   })
 
@@ -188,7 +196,7 @@ describe('validateConfig', () => {
     })
 
     it('throws for string debug', () => {
-      expect(() => validateConfig({ ...baseConfig, debug: 'true' as unknown as boolean })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, debug: 'true' as unknown as boolean })).toThrow('[limiterx]')
     })
   })
 
@@ -206,11 +214,11 @@ describe('validateConfig', () => {
     })
 
     it('throws for array message', () => {
-      expect(() => validateConfig({ ...baseConfig, message: ['not', 'allowed'] as unknown as string })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, message: ['not', 'allowed'] as unknown as string })).toThrow('[limiterx]')
     })
 
     it('throws for number message', () => {
-      expect(() => validateConfig({ ...baseConfig, message: 42 as unknown as string })).toThrow('[flowguard]')
+      expect(() => validateConfig({ ...baseConfig, message: 42 as unknown as string })).toThrow('[limiterx]')
     })
   })
 
@@ -254,11 +262,11 @@ describe('validateConfig', () => {
   })
 
   describe('error message prefix', () => {
-    it("error messages contain '[flowguard]' prefix", () => {
+    it("error messages contain '[limiterx]' prefix", () => {
       try {
         validateConfig({ ...baseConfig, max: -1 })
       } catch (err) {
-        expect((err as Error).message).toMatch(/^\[flowguard\]/)
+        expect((err as Error).message).toMatch(/^\[limiterx\]/)
       }
     })
   })

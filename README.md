@@ -1,14 +1,15 @@
-# Flowguard
+# Limiterx
 
 Universal production-ready rate limiting for JavaScript/TypeScript. Works in Node.js, browsers, edge runtimes, and Bun.
 
 ## Features
 
-- Fixed window algorithm with wall-clock-aligned boundaries
+- Three algorithms: fixed window, sliding window, and token bucket
 - Zero runtime dependencies in core
 - Backend adapters: Express, Node HTTP, Next.js (API + Edge), Koa
 - Frontend adapters: React hook, fetch wrapper, Axios interceptor
 - In-memory store with LRU eviction (default **10,000** keys)
+- Optional Redis store (`limiterx/redis`) for multi-process deployments
 - Standard `RateLimit-*` headers (RFC draft compliant)
 - Tree-shakeable subpath exports (`sideEffects: false`)
 - Dual ESM/CJS output
@@ -17,7 +18,7 @@ Universal production-ready rate limiting for JavaScript/TypeScript. Works in Nod
 ## Installation
 
 ```bash
-npm install flowguard
+npm install limiterx
 ```
 
 ## Quick Start
@@ -26,7 +27,7 @@ npm install flowguard
 
 ```typescript
 import express from 'express';
-import { rateLimitExpress } from 'flowguard/express';
+import { rateLimitExpress } from 'limiterx/express';
 
 const app = express();
 
@@ -45,7 +46,7 @@ app.listen(3000);
 ### Next.js API Route
 
 ```typescript
-import { rateLimitNext } from 'flowguard/next';
+import { rateLimitNext } from 'limiterx/next';
 
 const limiter = rateLimitNext({ max: 20, window: '1m' });
 
@@ -59,7 +60,7 @@ export async function GET(req, res) {
 ### Next.js Edge Middleware
 
 ```typescript
-import { rateLimitEdge } from 'flowguard/next';
+import { rateLimitEdge } from 'limiterx/next';
 
 export const middleware = rateLimitEdge({
   max: 10,
@@ -72,7 +73,7 @@ export const config = { matcher: ['/api/:path*'] };
 ### React Hook
 
 ```typescript
-import { useRateLimit } from 'flowguard/react';
+import { useRateLimit } from 'limiterx/react';
 
 function SubmitButton() {
   const { allowed, remaining, attempt } = useRateLimit('form-submit', {
@@ -91,7 +92,7 @@ function SubmitButton() {
 ### Fetch Wrapper
 
 ```typescript
-import { rateLimitFetch } from 'flowguard/fetch';
+import { rateLimitFetch } from 'limiterx/fetch';
 
 const guardedFetch = rateLimitFetch(fetch, {
   max: 10,
@@ -104,7 +105,7 @@ const res = await guardedFetch('https://api.example.com/data');
 ### Core API (No Framework)
 
 ```typescript
-import { createRateLimiter } from 'flowguard';
+import { createRateLimiter } from 'limiterx';
 
 const limiter = createRateLimiter({
   max: 100,
@@ -120,14 +121,14 @@ const result = await limiter.check('user-123');
 
 | Adapter | Import | Type |
 |---------|--------|------|
-| Express | `flowguard/express` | Backend middleware |
-| Node HTTP | `flowguard/node` | Backend (developer-controlled response) |
-| Next.js API | `flowguard/next` | Backend (API routes) |
-| Next.js Edge | `flowguard/next` | Backend (Edge middleware) |
-| Koa | `flowguard/koa` | Backend middleware |
-| React | `flowguard/react` | Frontend hook |
-| Fetch | `flowguard/fetch` | Frontend wrapper |
-| Axios | `flowguard/axios` | Frontend interceptor |
+| Express | `limiterx/express` | Backend middleware |
+| Node HTTP | `limiterx/node` | Backend (developer-controlled response) |
+| Next.js API | `limiterx/next` | Backend (API routes) |
+| Next.js Edge | `limiterx/next` | Backend (Edge middleware) |
+| Koa | `limiterx/koa` | Backend middleware |
+| React | `limiterx/react` | Frontend hook |
+| Fetch | `limiterx/fetch` | Frontend wrapper |
+| Axios | `limiterx/axios` | Frontend interceptor |
 
 ## Configuration
 
@@ -137,14 +138,76 @@ All adapters share the same configuration shape:
 |--------|------|---------|-------------|
 | `max` | `number` | *required* | Max requests per window |
 | `window` | `number \| string` | *required* | Duration: `'30s'`, `'5m'`, `'1h'`, `'1d'`, or milliseconds |
+| `algorithm` | `'fixed-window' \| 'sliding-window' \| 'token-bucket'` | `'fixed-window'` | Rate limiting algorithm |
+| `store` | `StorageAdapter` | `new MemoryStore()` | Custom storage backend |
 | `keyGenerator` | `function` | IP (backend) / `'global'` (frontend) | Custom key resolver |
 | `onLimit` | `function` | - | Callback when limit exceeded |
 | `maxKeys` | `number` | `10000` | Max distinct keys in memory (LRU eviction) |
 | `debug` | `boolean` | `false` | Console diagnostics |
 | `skip` | `function` | - | Bypass rate limiting for certain requests |
-| `message` | `string \| object` | `'Too many requests'` | Response body on 429 (backend) |
+| `message` | `string \| object \| function` | `'Too many requests'` | Response body on 429 (backend) |
 | `statusCode` | `number` | `429` | HTTP status on deny (backend) |
 | `headers` | `boolean` | `true` | Send rate limit headers (backend) |
+| `legacyHeaders` | `boolean` | `false` | Also emit `X-RateLimit-*` headers |
+| `passOnStoreError` | `boolean` | `false` | Allow requests through on storage errors (fail-open) |
+
+### Algorithms
+
+Use the `algorithm` option to select a rate limiting strategy:
+
+```typescript
+// Fixed window (default) — simple counter, resets on aligned wall-clock boundaries
+app.use(rateLimitExpress({ max: 100, window: '15m', algorithm: 'fixed-window' }));
+
+// Sliding window — weighted blend of previous and current window counts
+// Eliminates burst-at-boundary spikes; higher memory usage (2 keys per tracked identity)
+app.use(rateLimitExpress({ max: 100, window: '15m', algorithm: 'sliding-window' }));
+
+// Token bucket — bucket starts full and refills at max/window rate
+// Best for APIs with bursty-but-bounded traffic patterns
+app.use(rateLimitExpress({ max: 100, window: '15m', algorithm: 'token-bucket' }));
+```
+
+| Algorithm | Burst allowance | Memory per key | Boundary spikes |
+|-----------|----------------|----------------|-----------------|
+| `fixed-window` | Full burst at window start | 1 key | Yes |
+| `sliding-window` | Weighted blend | 2 keys | No |
+| `token-bucket` | Burst up to `max`, then steady | 1 key | No |
+
+### Custom Store
+
+By default limiterx uses an in-memory LRU store. For multi-process or multi-server deployments, use Redis:
+
+```typescript
+import Redis from 'ioredis';
+import { rateLimitExpress } from 'limiterx/express';
+import { RedisStore } from 'limiterx/redis';
+
+const client = new Redis({ host: 'localhost', port: 6379 });
+const store = new RedisStore(client);
+
+app.use(rateLimitExpress({
+  max: 100,
+  window: '15m',
+  store,
+}));
+```
+
+`RedisStore` is compatible with both **ioredis** and **node-redis** (v4+). It uses a Lua script for atomic `INCR + EXPIRE` operations, ensuring correctness under concurrent load.
+
+You can also provide any custom storage backend by implementing the `StorageAdapter` interface:
+
+```typescript
+import type { StorageAdapter } from 'limiterx';
+
+class MyStore implements StorageAdapter {
+  async get(key: string) { /* ... */ }
+  async set(key: string, state: Record<string, number>, ttlMs: number) { /* ... */ }
+  async increment(key: string, ttlMs: number): Promise<number> { /* ... */ }
+  async delete(key: string) { /* ... */ }
+  async clear() { /* ... */ }
+}
+```
 
 ### Window Strings
 
@@ -203,8 +266,8 @@ const limiter = createRateLimiter({
   window: '1m',
   debug: true,
 });
-// Console: [flowguard] ALLOW key="user-123" count=1 remaining=9 (new window)
-// Console: [flowguard] DENY key="user-123" count=10 max=10 retryAfter=45000ms
+// Console: [limiterx] ALLOW key="user-123" count=1 remaining=9 (new window)
+// Console: [limiterx] DENY key="user-123" count=10 max=10 retryAfter=45000ms
 ```
 
 ## TypeScript
@@ -212,7 +275,7 @@ const limiter = createRateLimiter({
 Full TypeScript support with strict types:
 
 ```typescript
-import type { FlowGuardConfig, RateLimiterResult, RateLimiter } from 'flowguard';
+import type { LimiterxConfig, RateLimiterResult, RateLimiter } from 'limiterx';
 ```
 
 ## Publishing
@@ -221,8 +284,8 @@ This package is published to npm with provenance. To publish a new version:
 
 1. Update version in `package.json`
 2. Update `CHANGELOG.md`
-3. Commit and tag: `git tag v1.0.0`
-4. Push tag: `git push origin v1.0.0`
+3. Commit and tag: `git tag vX.Y.Z` (match `package.json`)
+4. Push tag: `git push origin vX.Y.Z`
 5. CI will publish automatically (requires `NPM_TOKEN` secret)
 
 ## Requirements

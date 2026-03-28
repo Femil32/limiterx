@@ -1,9 +1,9 @@
 /**
- * Flowguard - Universal production-ready rate limiting for JavaScript/TypeScript.
+ * Limiterx - Universal production-ready rate limiting for JavaScript/TypeScript.
  *
  * @example
  * ```typescript
- * import { createRateLimiter } from 'flowguard';
+ * import { createRateLimiter } from 'limiterx';
  *
  * const limiter = createRateLimiter({ max: 100, window: '15m' });
  * const result = await limiter.check('user-123');
@@ -12,9 +12,11 @@
  */
 
 export type {
-  FlowGuardConfig,
+  LimiterxConfig,
   RateLimiterResult,
   FixedWindowState,
+  TokenBucketState,
+  StorageAdapter,
   RequestContext,
   RateLimiter,
 } from './core/types.js';

@@ -1,4 +1,4 @@
-import { rateLimitEdge } from 'flowguard/next';
+import { rateLimitEdge } from 'limiterx/next';
 
 export const middleware = rateLimitEdge({
   max: 10,

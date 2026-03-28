@@ -22,11 +22,12 @@ export class FixedWindowLimiter {
   /**
    * Execute a rate limit check for the given namespaced key.
    *
-   * @param namespacedKey - The full storage key (already namespaced with 'flowguard:')
+   * @param namespacedKey - The full storage key (already namespaced with 'limiterx:')
    * @param displayKey - The user-facing key for the result
    * @returns Rate limit result
    */
-  async check(namespacedKey: string, displayKey: string): Promise<RateLimiterResult> {
+  async check(namespacedKey: string, displayKey: string, maxOverride?: number): Promise<RateLimiterResult> {
+    const effectiveMax = maxOverride ?? this.max;
     const now = Date.now();
     const currentWindowStart = Math.floor(now / this.windowMs) * this.windowMs;
     const windowEnd = currentWindowStart + this.windowMs;
@@ -38,14 +39,14 @@ export class FixedWindowLimiter {
 
     if (state && state.windowStart === currentWindowStart) {
       // Same window — check if limit exceeded
-      if (state.count >= this.max) {
+      if (state.count >= effectiveMax) {
         if (this.debug) {
-          console.log(`[flowguard] DENY key="${displayKey}" count=${state.count} max=${this.max} retryAfter=${retryAfterMs}ms`);
+          console.log(`[limiterx] DENY key="${displayKey}" count=${state.count} max=${effectiveMax} retryAfter=${retryAfterMs}ms`);
         }
         return {
           allowed: false,
           remaining: 0,
-          limit: this.max,
+          limit: effectiveMax,
           retryAfter: retryAfterMs,
           resetAt,
           key: displayKey,
@@ -55,16 +56,16 @@ export class FixedWindowLimiter {
       // Increment count
       const newCount = state.count + 1;
       await this.store.set(namespacedKey, { count: newCount, windowStart: currentWindowStart }, retryAfterMs);
-      const remaining = Math.max(0, this.max - newCount);
+      const remaining = Math.max(0, effectiveMax - newCount);
 
       if (this.debug) {
-        console.log(`[flowguard] ALLOW key="${displayKey}" count=${newCount} remaining=${remaining}`);
+        console.log(`[limiterx] ALLOW key="${displayKey}" count=${newCount} remaining=${remaining}`);
       }
 
       return {
         allowed: true,
         remaining,
-        limit: this.max,
+        limit: effectiveMax,
         retryAfter: 0,
         resetAt,
         key: displayKey,
@@ -73,16 +74,16 @@ export class FixedWindowLimiter {
 
     // New window — reset count
     await this.store.set(namespacedKey, { count: 1, windowStart: currentWindowStart }, retryAfterMs);
-    const remaining = this.max - 1;
+    const remaining = effectiveMax - 1;
 
     if (this.debug) {
-      console.log(`[flowguard] ALLOW key="${displayKey}" count=1 remaining=${remaining} (new window)`);
+      console.log(`[limiterx] ALLOW key="${displayKey}" count=1 remaining=${remaining} (new window)`);
     }
 
     return {
       allowed: true,
       remaining,
-      limit: this.max,
+      limit: effectiveMax,
       retryAfter: 0,
       resetAt,
       key: displayKey,

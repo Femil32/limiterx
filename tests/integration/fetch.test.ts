@@ -115,4 +115,23 @@ describe('rateLimitFetch', () => {
     expect(keyGenCallCount).toBe(2);
     expect(fetchFn).toHaveBeenCalledTimes(2);
   });
+
+  describe('algorithm: token-bucket', () => {
+    it('throws RateLimitError when token bucket is exhausted', async () => {
+      const fetchFn = vi.fn().mockResolvedValue(mockResponse());
+      const guarded = rateLimitFetch(fetchFn as unknown as typeof fetch, {
+        max: 1,
+        window: '1m',
+        algorithm: 'token-bucket',
+      });
+
+      // First request is allowed
+      const res = await guarded('https://example.com/api');
+      expect(res.status).toBe(200);
+
+      // Second request is denied — token bucket exhausted
+      await expect(guarded('https://example.com/api')).rejects.toThrow(RateLimitError);
+      expect(fetchFn).toHaveBeenCalledOnce();
+    });
+  });
 });

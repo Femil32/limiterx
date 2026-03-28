@@ -37,4 +37,46 @@ describe('check() latency (NFR-PF)', () => {
 
     console.log(`Latency: median=${median.toFixed(3)}ms p95=${p95.toFixed(3)}ms`);
   });
+
+  it('sliding-window: p95 latency < 2ms for 1000 checks', async () => {
+    limiter = createRateLimiter({ max: 100_000, window: '1h', algorithm: 'sliding-window' });
+
+    const latencies: number[] = [];
+    const iterations = 1000;
+
+    for (let i = 0; i < iterations; i++) {
+      const start = performance.now();
+      await limiter.check(`key-${i % 100}`);
+      const end = performance.now();
+      latencies.push(end - start);
+    }
+
+    latencies.sort((a, b) => a - b);
+
+    const p95 = latencies[Math.floor(latencies.length * 0.95)];
+
+    expect(p95).toBeLessThan(2);
+    console.log(`sliding-window p95=${p95.toFixed(3)}ms`);
+  });
+
+  it('token-bucket: p95 latency < 2ms for 1000 checks', async () => {
+    limiter = createRateLimiter({ max: 100_000, window: '1h', algorithm: 'token-bucket' });
+
+    const latencies: number[] = [];
+    const iterations = 1000;
+
+    for (let i = 0; i < iterations; i++) {
+      const start = performance.now();
+      await limiter.check(`key-${i % 100}`);
+      const end = performance.now();
+      latencies.push(end - start);
+    }
+
+    latencies.sort((a, b) => a - b);
+
+    const p95 = latencies[Math.floor(latencies.length * 0.95)];
+
+    expect(p95).toBeLessThan(2);
+    console.log(`token-bucket p95=${p95.toFixed(3)}ms`);
+  });
 });
