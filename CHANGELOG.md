@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-03-29
+
+### Changed
+
+- **README** — restructured with badges, complete config reference table, and advanced usage section
+- **package.json** — added `author`, `repository`, `homepage`, `bugs` fields; expanded keywords for npm discoverability
+- **Build** — `tsup` config now includes `minify: true` and `target: 'node18'` for smaller output
+
+### Fixed
+
+- Express integration test: added `keyGenerator` to isolate per-test rate limit counters, eliminating cross-test interference flakiness
+
+---
+
 ## [1.2.0] - 2026-03-28
 
 ### Added
