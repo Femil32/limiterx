@@ -24,7 +24,7 @@ describe('rateLimitExpress', () => {
 
   it('returns 429 with body "Too many requests" and Retry-After header when limit exceeded', async () => {
     app = express();
-    app.use(rateLimitExpress({ max: 2, window: '1m' }));
+    app.use(rateLimitExpress({ max: 2, window: '1m', keyGenerator: () => 'test-key' }));
     app.get('/', (_req, res) => res.send('ok'));
 
     await request(app).get('/');
