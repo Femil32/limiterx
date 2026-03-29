@@ -1,5 +1,6 @@
 # limiterx
 
+[![CI](https://github.com/Femil32/limiterx/actions/workflows/ci.yml/badge.svg)](https://github.com/Femil32/limiterx/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/limiterx.svg)](https://www.npmjs.com/package/limiterx)
 [![npm downloads](https://img.shields.io/npm/dw/limiterx.svg)](https://www.npmjs.com/package/limiterx)
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/limiterx)](https://bundlephobia.com/package/limiterx)
