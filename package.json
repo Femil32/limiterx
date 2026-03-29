@@ -117,17 +117,36 @@
   "keywords": [
     "rate-limit",
     "rate-limiter",
+    "rate-limiting",
     "throttle",
     "middleware",
     "express",
     "koa",
     "next",
+    "nextjs",
     "react",
     "fetch",
     "axios",
-    "typescript"
+    "typescript",
+    "nodejs",
+    "sliding-window",
+    "token-bucket",
+    "redis",
+    "bun",
+    "edge-runtime",
+    "hono",
+    "api-rate-limit",
+    "ddos-protection"
   ],
-  "author": "",
+  "author": "Femil Savaliya",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Femil32/limiterx"
+  },
+  "homepage": "https://github.com/Femil32/limiterx#readme",
+  "bugs": {
+    "url": "https://github.com/Femil32/limiterx/issues"
+  },
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"

@@ -1,6 +1,31 @@
-# Limiterx
+# limiterx
+
+[![npm version](https://img.shields.io/npm/v/limiterx.svg)](https://www.npmjs.com/package/limiterx)
+[![npm downloads](https://img.shields.io/npm/dw/limiterx.svg)](https://www.npmjs.com/package/limiterx)
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/limiterx)](https://bundlephobia.com/package/limiterx)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)](https://www.npmjs.com/package/limiterx)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 Universal production-ready rate limiting for JavaScript/TypeScript. Works in Node.js, browsers, edge runtimes, and Bun.
+
+---
+
+## Why limiterx?
+
+| Feature | limiterx | express-rate-limit | rate-limiter-flexible |
+|---|---|---|---|
+| Algorithms | fixed window, sliding window, token bucket | fixed window only | many |
+| Adapters | Express, Koa, Node HTTP, Next.js (API + Edge), React, fetch, Axios | Express only | manual integration |
+| Edge Runtime support | ✅ (Next.js middleware, no Node built-ins) | ❌ | ❌ |
+| React / browser | ✅ hook + fetch + Axios | ❌ | ❌ |
+| Redis built-in | ✅ (`limiterx/redis`) | via plugin | ✅ |
+| Dynamic `max` per request | ✅ async function | ✅ | manual |
+| Zero runtime dependencies | ✅ | ✅ | ❌ |
+| IETF `RateLimit-*` headers | ✅ (draft-6/7/8) | ✅ | manual |
+| TypeScript-first | ✅ strict types | partial | partial |
+| Tree-shakeable | ✅ subpath imports | ❌ | ❌ |
+
+---
 
 ## Features
 
@@ -10,16 +35,25 @@ Universal production-ready rate limiting for JavaScript/TypeScript. Works in Nod
 - Frontend adapters: React hook, fetch wrapper, Axios interceptor
 - In-memory store with LRU eviction (default **10,000** keys)
 - Optional Redis store (`limiterx/redis`) for multi-process deployments
-- Standard `RateLimit-*` headers (RFC draft compliant)
+- Standard `RateLimit-*` headers (IETF draft-6, draft-7, draft-8 selectable)
+- Optional legacy `X-RateLimit-*` headers for GitHub/Twitter API compatibility
+- Dynamic `max` as async function — per-user tier limits
+- `skipSuccessfulRequests` / `skipFailedRequests` — only count what matters
+- Custom `handler` — replace built-in 429 response entirely
+- IPv6 subnet masking (default /56) for fair per-user tracking
 - Tree-shakeable subpath exports (`sideEffects: false`)
 - Dual ESM/CJS output
 - TypeScript-first with strict types
+
+---
 
 ## Installation
 
 ```bash
 npm install limiterx
 ```
+
+---
 
 ## Quick Start
 
@@ -43,6 +77,46 @@ app.get('/api/data', (req, res) => {
 app.listen(3000);
 ```
 
+### Koa
+
+```typescript
+import Koa from 'koa';
+import { rateLimitKoa } from 'limiterx/koa';
+
+const app = new Koa();
+
+app.use(rateLimitKoa({
+  max: 100,
+  window: '15m',
+}));
+
+app.use((ctx) => {
+  ctx.body = { message: 'Hello!' };
+});
+
+app.listen(3000);
+```
+
+### Node HTTP
+
+```typescript
+import http from 'http';
+import { rateLimitNode } from 'limiterx/node';
+
+const limiter = rateLimitNode({ max: 100, window: '15m' });
+
+http.createServer(async (req, res) => {
+  const result = await limiter(req, res);
+  if (!result.allowed) {
+    res.writeHead(429, { 'Content-Type': 'text/plain' });
+    res.end('Too many requests');
+    return;
+  }
+  res.writeHead(200);
+  res.end('Hello!');
+}).listen(3000);
+```
+
 ### Next.js API Route
 
 ```typescript
@@ -50,8 +124,8 @@ import { rateLimitNext } from 'limiterx/next';
 
 const limiter = rateLimitNext({ max: 20, window: '1m' });
 
-export async function GET(req, res) {
-  const result = await limiter.check(req, res);
+export async function GET(req: Request) {
+  const result = await limiter.check(req);
   if (!result.allowed) return;
   return Response.json({ data: 'ok' });
 }
@@ -102,6 +176,23 @@ const guardedFetch = rateLimitFetch(fetch, {
 const res = await guardedFetch('https://api.example.com/data');
 ```
 
+### Axios Interceptor
+
+```typescript
+import axios from 'axios';
+import { rateLimitAxios } from 'limiterx/axios';
+
+const client = axios.create();
+
+rateLimitAxios(client, {
+  max: 10,
+  window: '1m',
+});
+
+// Throws RateLimitError when limit exceeded
+const res = await client.get('https://api.example.com/data');
+```
+
 ### Core API (No Framework)
 
 ```typescript
@@ -117,18 +208,22 @@ const result = await limiter.check('user-123');
 // { allowed: true, remaining: 99, limit: 100, retryAfter: 0, resetAt: Date, key: 'user-123' }
 ```
 
+---
+
 ## Adapters
 
-| Adapter | Import | Type |
-|---------|--------|------|
-| Express | `limiterx/express` | Backend middleware |
-| Node HTTP | `limiterx/node` | Backend (developer-controlled response) |
-| Next.js API | `limiterx/next` | Backend (API routes) |
-| Next.js Edge | `limiterx/next` | Backend (Edge middleware) |
-| Koa | `limiterx/koa` | Backend middleware |
-| React | `limiterx/react` | Frontend hook |
-| Fetch | `limiterx/fetch` | Frontend wrapper |
-| Axios | `limiterx/axios` | Frontend interceptor |
+| Adapter | Import | Type | Default key |
+|---------|--------|------|-------------|
+| Express | `limiterx/express` | Backend middleware | `req.ip` (IPv6 /56) |
+| Node HTTP | `limiterx/node` | Backend (developer-controlled response) | `req.socket.remoteAddress` |
+| Next.js API | `limiterx/next` | Backend (API routes) | `req.ip` or `x-forwarded-for` |
+| Next.js Edge | `limiterx/next` | Backend (Edge middleware) | `req.ip` or `x-forwarded-for` |
+| Koa | `limiterx/koa` | Backend middleware | `ctx.ip` (IPv6 /56) |
+| React | `limiterx/react` | Frontend hook | key param |
+| Fetch | `limiterx/fetch` | Frontend wrapper | `'global'` |
+| Axios | `limiterx/axios` | Frontend interceptor | `'global'` |
+
+---
 
 ## Configuration
 
@@ -136,22 +231,32 @@ All adapters share the same configuration shape:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `max` | `number` | *required* | Max requests per window |
+| `max` | `number \| (ctx) => number \| Promise<number>` | *required* | Max requests per window. Pass a function for per-user tiers. |
 | `window` | `number \| string` | *required* | Duration: `'30s'`, `'5m'`, `'1h'`, `'1d'`, or milliseconds |
 | `algorithm` | `'fixed-window' \| 'sliding-window' \| 'token-bucket'` | `'fixed-window'` | Rate limiting algorithm |
 | `store` | `StorageAdapter` | `new MemoryStore()` | Custom storage backend |
-| `keyGenerator` | `function` | IP (backend) / `'global'` (frontend) | Custom key resolver |
-| `onLimit` | `function` | - | Callback when limit exceeded |
+| `keyGenerator` | `(ctx) => string \| Promise<string>` | IP (backend) / `'global'` (frontend) | Custom key resolver (supports async) |
+| `skip` | `(ctx) => boolean \| Promise<boolean>` | - | Bypass rate limiting for certain requests (supports async) |
+| `onLimit` | `(result, ctx) => void` | - | Callback when limit exceeded |
+| `handler` | `(result, ctx) => void \| Promise<void>` | - | Replaces built-in 429 response entirely; `onLimit` fires first |
+| `message` | `string \| object \| (result, ctx) => string \| object \| Promise<…>` | `'Too many requests'` | Response body on 429 (backend) |
+| `statusCode` | `number` | `429` | HTTP status on deny (backend) |
+| `headers` | `boolean` | `true` | Master gate for all rate limit headers |
+| `standardHeaders` | `'draft-6' \| 'draft-7' \| 'draft-8'` | `'draft-6'` | IETF `RateLimit-*` header format |
+| `legacyHeaders` | `boolean` | `false` | Also emit `X-RateLimit-*` headers (epoch timestamp for Reset) |
+| `requestPropertyName` | `string` | `'rateLimit'` | Property on `req`/`ctx` where result is attached for downstream middleware |
+| `skipSuccessfulRequests` | `boolean` | `false` | Don't count requests with 2xx/3xx responses |
+| `skipFailedRequests` | `boolean` | `false` | Don't count requests with 4xx/5xx responses |
+| `requestWasSuccessful` | `(ctx) => boolean \| Promise<boolean>` | status < 400 | Custom success predicate for skip* options |
+| `passOnStoreError` | `boolean` | `false` | Allow requests through on storage errors (fail-open) |
+| `ipv6Subnet` | `number \| false` | `56` | IPv6 subnet prefix length for masking; `false` to disable |
 | `maxKeys` | `number` | `10000` | Max distinct keys in memory (LRU eviction) |
 | `debug` | `boolean` | `false` | Console diagnostics |
-| `skip` | `function` | - | Bypass rate limiting for certain requests |
-| `message` | `string \| object \| function` | `'Too many requests'` | Response body on 429 (backend) |
-| `statusCode` | `number` | `429` | HTTP status on deny (backend) |
-| `headers` | `boolean` | `true` | Send rate limit headers (backend) |
-| `legacyHeaders` | `boolean` | `false` | Also emit `X-RateLimit-*` headers |
-| `passOnStoreError` | `boolean` | `false` | Allow requests through on storage errors (fail-open) |
+| `validate` | `boolean \| Record<string, boolean>` | `true` | Runtime config validation warnings; `false` to silence all |
 
-### Algorithms
+---
+
+## Algorithms
 
 Use the `algorithm` option to select a rate limiting strategy:
 
@@ -174,50 +279,7 @@ app.use(rateLimitExpress({ max: 100, window: '15m', algorithm: 'token-bucket' })
 | `sliding-window` | Weighted blend | 2 keys | No |
 | `token-bucket` | Burst up to `max`, then steady | 1 key | No |
 
-### Custom Store
-
-By default limiterx uses an in-memory LRU store. For multi-process or multi-server deployments, use Redis:
-
-```typescript
-import Redis from 'ioredis';
-import { rateLimitExpress } from 'limiterx/express';
-import { RedisStore } from 'limiterx/redis';
-
-const client = new Redis({ host: 'localhost', port: 6379 });
-const store = new RedisStore(client);
-
-app.use(rateLimitExpress({
-  max: 100,
-  window: '15m',
-  store,
-}));
-```
-
-`RedisStore` is compatible with both **ioredis** and **node-redis** (v4+). It uses a Lua script for atomic `INCR + EXPIRE` operations, ensuring correctness under concurrent load.
-
-You can also provide any custom storage backend by implementing the `StorageAdapter` interface:
-
-```typescript
-import type { StorageAdapter } from 'limiterx';
-
-class MyStore implements StorageAdapter {
-  async get(key: string) { /* ... */ }
-  async set(key: string, state: Record<string, number>, ttlMs: number) { /* ... */ }
-  async increment(key: string, ttlMs: number): Promise<number> { /* ... */ }
-  async delete(key: string) { /* ... */ }
-  async clear() { /* ... */ }
-}
-```
-
-### Window Strings
-
-| Format | Example | Milliseconds |
-|--------|---------|-------------|
-| Milliseconds | `'500ms'` | 500 |
-| Seconds | `'30s'` | 30,000 |
-| Minutes | `'5m'` | 300,000 |
-| Hours | `'1h'` | 3,600,000 |
-| Days | `'1d'` | 86,400,000 |
+---
 
 ## HTTP Headers
 
@@ -235,17 +297,193 @@ When denied (429), the `Retry-After` header is also set:
 Retry-After: 540
 ```
 
-Headers use integer values only. No `X-RateLimit-*` headers are emitted.
+`RateLimit-Reset` is a **relative** countdown in seconds (IETF standard).
 
-## Custom Key Generation
+### Legacy headers
+
+Enable `X-RateLimit-*` headers for compatibility with clients expecting the GitHub/Twitter convention:
+
+```typescript
+rateLimitExpress({ max: 100, window: '15m', legacyHeaders: true });
+// X-RateLimit-Limit: 100
+// X-RateLimit-Remaining: 95
+// X-RateLimit-Reset: 1711234567   ← absolute Unix epoch (seconds)
+```
+
+Set `headers: false` to suppress **all** rate limit headers.
+
+---
+
+## Advanced Usage
+
+### Dynamic max (per-user tier limits)
+
+```typescript
+app.use(rateLimitExpress({
+  max: async (ctx) => {
+    const user = await getUserFromDb(ctx.req.user?.id);
+    return user?.isPro ? 1000 : 100;
+  },
+  window: '15m',
+}));
+```
+
+### skipSuccessfulRequests / skipFailedRequests
+
+```typescript
+// Only count failed login attempts (4xx/5xx), not successful ones
+app.use('/login', rateLimitExpress({
+  max: 5,
+  window: '15m',
+  skipSuccessfulRequests: true,
+}));
+
+// Custom success predicate
+app.use(rateLimitExpress({
+  max: 100,
+  window: '15m',
+  skipSuccessfulRequests: true,
+  requestWasSuccessful: (ctx) => ctx.res.statusCode < 400,
+}));
+```
+
+### Custom handler
 
 ```typescript
 app.use(rateLimitExpress({
   max: 100,
   window: '15m',
-  keyGenerator: (ctx) => ctx.req.user?.id || ctx.req.ip,
+  handler: (result, ctx) => {
+    ctx.res.status(429).json({
+      error: 'Rate limit exceeded',
+      retryAfter: result.retryAfter,
+      resetAt: result.resetAt,
+    });
+  },
 }));
 ```
+
+### Async keyGenerator
+
+```typescript
+app.use(rateLimitExpress({
+  max: 100,
+  window: '15m',
+  keyGenerator: async (ctx) => {
+    const apiKey = ctx.req.headers['x-api-key'];
+    if (apiKey) return `api:${apiKey}`;
+    return ctx.req.ip;
+  },
+}));
+```
+
+### Async skip
+
+```typescript
+app.use(rateLimitExpress({
+  max: 100,
+  window: '15m',
+  skip: async (ctx) => {
+    return isInternalIp(ctx.req.ip);
+  },
+}));
+```
+
+### requestPropertyName
+
+```typescript
+// Access rate limit result in downstream middleware/routes
+app.use(rateLimitExpress({
+  max: 100,
+  window: '15m',
+  requestPropertyName: 'rateLimit',  // default
+}));
+
+app.get('/status', (req, res) => {
+  res.json({ remaining: req.rateLimit.remaining });
+});
+```
+
+### IPv6 subnet masking
+
+```typescript
+// Default: /56 mask groups IPv6 addresses into subnets
+// Increase to /48 for broader grouping, or disable entirely
+rateLimitExpress({ max: 100, window: '15m', ipv6Subnet: 48 });
+rateLimitExpress({ max: 100, window: '15m', ipv6Subnet: false }); // exact match
+```
+
+---
+
+## Redis Store
+
+For multi-process or multi-server deployments, use `RedisStore` to share counters:
+
+```typescript
+import Redis from 'ioredis';
+import { rateLimitExpress } from 'limiterx/express';
+import { RedisStore } from 'limiterx/redis';
+
+const client = new Redis({ host: 'localhost', port: 6379 });
+const store = new RedisStore(client);
+
+app.use(rateLimitExpress({ max: 100, window: '15m', store }));
+```
+
+`RedisStore` is compatible with both **ioredis** and **node-redis** (v4+). It uses a Lua script for atomic `INCR + EXPIRE` operations, ensuring correctness under concurrent load.
+
+---
+
+## Custom Storage Adapter
+
+Implement the `StorageAdapter` interface to use any storage backend:
+
+```typescript
+import type { StorageAdapter } from 'limiterx';
+
+class MyStore implements StorageAdapter {
+  async get(key: string) { /* ... */ }
+  async set(key: string, state: Record<string, number>, ttlMs: number) { /* ... */ }
+  async increment(key: string, ttlMs: number): Promise<number> { /* ... */ }
+  async decrement(key: string, ttlMs: number): Promise<void> { /* ... */ }
+  async delete(key: string) { /* ... */ }
+  async clear() { /* ... */ }
+}
+```
+
+---
+
+## Public API — `decrement()`
+
+The `RateLimiter` object returned by `createRateLimiter` exposes a `decrement()` method. Use it when you want to "un-count" a request after the fact — for example, implementing `skipSuccessfulRequests` manually in Node HTTP where the response status is only known after the handler runs:
+
+```typescript
+const limiter = createRateLimiter({ max: 100, window: '15m' });
+
+const result = await limiter.check('user-123');
+if (!result.allowed) { /* send 429 */ return; }
+
+// ... run handler, then check response status
+if (responseWasSuccessful) {
+  await limiter.decrement('user-123');
+}
+```
+
+`decrement` is a no-op if the key is missing or expired (floor at 0).
+
+---
+
+## Window Strings
+
+| Format | Example | Milliseconds |
+|--------|---------|-------------|
+| Milliseconds | `'500ms'` | 500 |
+| Seconds | `'30s'` | 30,000 |
+| Minutes | `'5m'` | 300,000 |
+| Hours | `'1h'` | 3,600,000 |
+| Days | `'1d'` | 86,400,000 |
+
+---
 
 ## Error Handling
 
@@ -255,6 +493,8 @@ If `keyGenerator` throws, the error propagates:
 - The request is **not** treated as allowed or denied (429)
 
 If `onLimit` throws, the error is silently swallowed.
+
+---
 
 ## Debug Mode
 
@@ -270,28 +510,24 @@ const limiter = createRateLimiter({
 // Console: [limiterx] DENY key="user-123" count=10 max=10 retryAfter=45000ms
 ```
 
+---
+
 ## TypeScript
 
 Full TypeScript support with strict types:
 
 ```typescript
-import type { LimiterxConfig, RateLimiterResult, RateLimiter } from 'limiterx';
+import type { LimiterxConfig, RateLimiterResult, RateLimiter, StorageAdapter } from 'limiterx';
 ```
 
-## Publishing
-
-This package is published to npm with provenance. To publish a new version:
-
-1. Update version in `package.json`
-2. Update `CHANGELOG.md`
-3. Commit and tag: `git tag vX.Y.Z` (match `package.json`)
-4. Push tag: `git push origin vX.Y.Z`
-5. CI will publish automatically (requires `NPM_TOKEN` secret)
+---
 
 ## Requirements
 
 - Node.js >= 18.0.0
 - TypeScript >= 5.0 (for type consumers)
+
+---
 
 ## License
 

@@ -18,6 +18,8 @@ export default defineConfig({
   dts: true,
   splitting: true,
   clean: true,
+  minify: true,
+  target: 'node18',
   external: ['react', 'express', 'koa', 'next', 'axios', 'ioredis', 'redis'],
   sourcemap: false,
 });
