@@ -1,6 +1,6 @@
 {
   "name": "limiterx",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Universal production-ready rate limiting library for JavaScript/TypeScript",
   "type": "module",
   "sideEffects": false,

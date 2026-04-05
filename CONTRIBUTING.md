@@ -1,5 +1,9 @@
 # Contributing
 
+Looking for something to work on? See [ROADMAP.md](./ROADMAP.md) for a full list of open
+contribution opportunities, from good-first-issues to advanced features, each with a clear
+description and the files involved.
+
 ## Development
 
 ```bash
